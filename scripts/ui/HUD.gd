@@ -371,6 +371,7 @@ func _process(delta: float) -> void:
 	_update_flag_hud()
 	_update_scope(delta)
 	_update_low_health_vignette(delta)
+	_update_vehicle_hud()
 
 func link_player(player: PlayerController) -> void:
 	_player = player
@@ -558,6 +559,19 @@ func _on_exited_vehicle() -> void:
 func _on_vehicle_hp(current: float, max_hp: float) -> void:
 	if vehicle_hp_bar:
 		vehicle_hp_bar.value = (current / max_hp) * 100.0
+
+func _update_vehicle_hud() -> void:
+	if not speed_label or not _player:
+		return
+	var v := _player.current_vehicle
+	if not v or not vehicle_hud.visible:
+		return
+	var kmh := 0.0
+	if v.has_method("get_speed_kmh"):
+		kmh = v.get_speed_kmh()
+	elif "linear_velocity" in v:
+		kmh = (v as Node3D).get("linear_velocity", Vector3.ZERO).length() * 3.6
+	speed_label.text = "%d km/h" % int(kmh)
 
 func _build_stamina_bar() -> void:
 	_stamina_bg = ColorRect.new()

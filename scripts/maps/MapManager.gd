@@ -84,6 +84,29 @@ func _spawn_map_props() -> void:
 	_spawn_sandbags()
 	_spawn_health_pickups()
 	_spawn_ammo_pickups()
+	_spawn_ambient_lights()
+
+func _spawn_ambient_lights() -> void:
+	# Lumières tactiques: couleur chaude = intérieur bâtiment, froide = extérieur
+	var lights: Array = [
+		# [position, color, range, energy]
+		[Vector3(-10, 4.0,  5), Color(1.0, 0.82, 0.55), 12.0, 1.4],  # Building1
+		[Vector3( 10, 4.0, -5), Color(1.0, 0.82, 0.55), 12.0, 1.4],  # Building2
+		[Vector3(  0, 3.5,  0), Color(0.55, 0.75, 1.00),  9.0, 0.9],  # centre carte
+		[Vector3(-20, 2.5,  0), Color(0.70, 0.90, 0.65),  8.0, 0.8],  # zone Alpha
+		[Vector3( 20, 2.5,  0), Color(0.70, 0.90, 0.65),  8.0, 0.8],  # zone Bravo
+		[Vector3(-10, 2.0,  5), Color(0.90, 0.60, 0.30),  6.0, 0.6],  # bâtiment 1 ext
+		[Vector3( 10, 2.0, -5), Color(0.90, 0.60, 0.30),  6.0, 0.6],  # bâtiment 2 ext
+	]
+	for i in lights.size():
+		var l := OmniLight3D.new()
+		l.name           = "AmbientLight_%d" % i
+		l.position       = lights[i][0]
+		l.light_color    = lights[i][1]
+		l.omni_range     = lights[i][2]
+		l.light_energy   = lights[i][3]
+		l.shadow_enabled = false
+		add_child(l)
 
 func _spawn_terrain_features() -> void:
 	var rock_mat := _make_pbr_material(

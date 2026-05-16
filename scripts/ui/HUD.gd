@@ -724,10 +724,11 @@ func _on_weapon_fired() -> void:
 	_spread = minf(_spread + 6.0, 18.0)
 
 func _update_crosshair_spread(delta: float) -> void:
-	_spread = maxf(_spread - delta * 22.0, 0.0)
+	var is_ads := _player != null and _player.is_aiming
+	var target := -5.0 if is_ads else 0.0
+	_spread = lerpf(_spread, target, delta * (18.0 if _spread > target else 10.0))
 	if _crosshair_lines.is_empty():
 		return
-	# Les 4 directions: [0]=haut, [1]=droite, [2]=bas, [3]=gauche
 	var dirs := [Vector2(0, -1), Vector2(1, 0), Vector2(0, 1), Vector2(-1, 0)]
 	for i in mini(_crosshair_lines.size(), 4):
 		if i < _crosshair_base_pos.size():

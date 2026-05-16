@@ -49,10 +49,39 @@ func _ready() -> void:
 	respawn_overlay.visible = false
 	kill_streak_label.visible = false
 	var pp := get_node_or_null("PostProcess")
+	if not pp:
+		pp = _build_post_process()
 	if pp:
 		pp.add_to_group("post_process")
 	_apply_styles()
 	_connect_signals()
+
+func _build_post_process() -> ColorRect:
+	var shader := Shader.new()
+	shader.code = """
+shader_type canvas_item;
+uniform float suppress_str : hint_range(0.0, 1.0) = 0.0;
+void fragment() {
+	vec4 col = texture(TEXTURE, UV);
+	float grey = dot(col.rgb, vec3(0.299, 0.587, 0.114));
+	col.rgb = mix(col.rgb, vec3(grey), suppress_str * 0.7);
+	vec2 uv = UV - 0.5;
+	float vig = dot(uv, uv) * suppress_str * 2.2;
+	col.rgb *= max(1.0 - vig, 0.0);
+	COLOR = col;
+}
+"""
+	var mat := ShaderMaterial.new()
+	mat.shader = shader
+	var pp := ColorRect.new()
+	pp.name = "PostProcess"
+	pp.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pp.color        = Color(1, 1, 1, 1)
+	pp.material     = mat
+	pp.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(pp)
+	move_child(pp, 0)
+	return pp
 
 # ─── Modern HUD styling ───────────────────────────────────────────────────────
 func _apply_styles() -> void:

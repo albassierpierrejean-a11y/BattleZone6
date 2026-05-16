@@ -346,7 +346,7 @@ void fragment() {
 	var w_mat := ShaderMaterial.new()
 	w_mat.shader = water_shader
 	water.material_override = w_mat
-	water.transparency = GeometryInstance3D.TRANSPARENCY_ALPHA
+	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(water)
 
 	# Fond de pierre peu profond sous l'eau

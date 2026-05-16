@@ -20,10 +20,12 @@ func _ready() -> void:
 
 func _cast_bullet(origin: Vector3, dir: Vector3) -> void:
 	super._cast_bullet(origin, dir)
-	# Tracé de balle visible
 	var cam := _get_camera()
 	if cam:
 		_spawn_bullet_trail(cam.global_position, dir)
+
+func _spawn_bullet_trace(_from: Vector3, _to: Vector3) -> void:
+	pass  # Sniper uses _spawn_bullet_trail with longer persistence
 
 func _spawn_bullet_trail(from: Vector3, dir: Vector3) -> void:
 	var root := get_tree().current_scene

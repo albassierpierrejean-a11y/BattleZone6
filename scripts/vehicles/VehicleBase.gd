@@ -33,6 +33,7 @@ var _steer_input: float = 0.0
 var _is_destroyed: bool = false
 
 var _exhaust: CPUParticles3D = null
+var _track_timer: float = 0.0
 
 func _ready() -> void:
 	hp = max_health
@@ -71,6 +72,7 @@ func _physics_process(delta: float) -> void:
 		return
 	_handle_drive_input(delta)
 	_update_engine_sound()
+	_spawn_tire_tracks(delta)
 	_sync_vehicle.rpc(global_position, global_rotation, linear_velocity, angular_velocity)
 
 func _handle_drive_input(delta: float) -> void:
@@ -179,6 +181,34 @@ func _destroy() -> void:
 	_spawn_destruction_vfx()
 	await get_tree().create_timer(5.0).timeout
 	queue_free()
+
+func _spawn_tire_tracks(delta: float) -> void:
+	var spd := linear_velocity.length()
+	if spd < 0.5:
+		return
+	_track_timer -= delta
+	if _track_timer > 0.0:
+		return
+	_track_timer = 0.25
+	var root := get_tree().current_scene
+	if not root:
+		return
+	var space := get_world_3d().direct_space_state
+	# Cast ray down from vehicle center
+	var from := global_position + Vector3.UP * 0.5
+	var ray  := PhysicsRayQueryParameters3D.create(from, from + Vector3.DOWN * 2.0)
+	ray.exclude = [get_rid()]
+	var hit := space.intersect_ray(ray)
+	if hit.is_empty():
+		return
+	var pos := hit["position"]
+	var decal := Decal.new()
+	root.add_child(decal)
+	decal.global_position = pos + Vector3.UP * 0.01
+	decal.size     = Vector3(1.6, 0.1, 0.8)
+	decal.modulate = Color(0.12, 0.10, 0.08, 0.65)
+	decal.rotation.y = global_rotation.y
+	get_tree().create_timer(18.0).timeout.connect(func(): if is_instance_valid(decal): decal.queue_free())
 
 func _spawn_destruction_vfx() -> void:
 	var root := get_tree().current_scene

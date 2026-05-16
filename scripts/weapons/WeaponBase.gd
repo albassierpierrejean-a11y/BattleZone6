@@ -190,6 +190,30 @@ func _play_effects() -> void:
 		muzzle_flash.restart()
 	_flash_muzzle_light()
 	_eject_shell()
+	_spawn_muzzle_smoke()
+
+func _spawn_muzzle_smoke() -> void:
+	if not muzzle:
+		return
+	var root := get_tree().current_scene
+	if not root:
+		return
+	var smoke := CPUParticles3D.new()
+	root.add_child(smoke)
+	smoke.global_position      = muzzle.global_position
+	smoke.one_shot             = true
+	smoke.explosiveness        = 0.9
+	smoke.amount               = 4
+	smoke.lifetime             = 0.6
+	smoke.initial_velocity_min = 0.4
+	smoke.initial_velocity_max = 1.4
+	smoke.spread               = 22.0
+	smoke.gravity              = Vector3(0.0, 0.8, 0.0)
+	smoke.scale_amount_min     = 0.02
+	smoke.scale_amount_max     = 0.08
+	smoke.color                = Color(0.65, 0.62, 0.58, 0.55)
+	smoke.emitting             = true
+	get_tree().create_timer(2.0).timeout.connect(func(): if is_instance_valid(smoke): smoke.queue_free())
 
 func _apply_recoil() -> void:
 	var cam := _get_camera()

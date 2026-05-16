@@ -39,6 +39,7 @@ enum FireMode { SEMI, AUTO, BURST }
 signal ammo_changed(current: int, reserve: int)
 signal fired
 signal reloaded
+signal reload_started(duration: float)
 signal empty_click
 signal hit_confirmed(is_headshot: bool)
 
@@ -232,6 +233,7 @@ func start_reload() -> void:
 	if _is_reloading or reserve_ammo <= 0 or current_ammo == mag_size:
 		return
 	_is_reloading = true
+	reload_started.emit(reload_time)
 	if reload_sound and reload_sound.stream:
 		reload_sound.play()
 	_tween_reload()

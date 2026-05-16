@@ -42,6 +42,8 @@ var _scope_overlay:      ColorRect        = null
 var _damage_vignette:    ColorRect        = null
 var _vignette_tween:     Tween            = null
 var _low_health_t:       float            = 0.0
+var _reload_bar:         ColorRect        = null
+var _reload_tween:       Tween            = null
 
 func _ready() -> void:
 	scoreboard.visible     = false
@@ -230,6 +232,7 @@ func _apply_styles() -> void:
 	_build_stamina_bar()
 	_build_suppress_overlay()
 	_build_damage_vignette()
+	_build_reload_bar()
 	_build_scope_overlay()
 
 func _team_color(team: int) -> Color:
@@ -429,6 +432,8 @@ func _connect_weapon_signals(player: PlayerController) -> void:
 	for w in player.weapon_manager.weapons:
 		if not w.hit_confirmed.is_connected(_on_hit_confirmed):
 			w.hit_confirmed.connect(_on_hit_confirmed)
+		if not w.reload_started.is_connected(_on_reload_started):
+			w.reload_started.connect(_on_reload_started)
 
 func _on_health_changed(current: float, max_hp: float) -> void:
 	_update_health_display(current, max_hp)
@@ -681,6 +686,49 @@ func _update_scope(_delta: float) -> void:
 	_scope_overlay.visible = scoped
 	if crosshair:
 		crosshair.visible = not scoped
+
+func _build_reload_bar() -> void:
+	# Barre de rechargement fine sous le compteur de munitions (coin bas droit)
+	var bg := ColorRect.new()
+	bg.anchor_right  = 1.0
+	bg.anchor_top    = 1.0
+	bg.anchor_bottom = 1.0
+	bg.anchor_left   = 0.0
+	bg.offset_left   = 0.0
+	bg.offset_right  = 0.0
+	bg.offset_top    = -83.0
+	bg.offset_bottom = -80.0
+	bg.color         = Color(0.04, 0.06, 0.04, 0.65)
+	bg.mouse_filter  = Control.MOUSE_FILTER_IGNORE
+	add_child(bg)
+
+	_reload_bar = ColorRect.new()
+	_reload_bar.anchor_right  = 0.0
+	_reload_bar.anchor_top    = 1.0
+	_reload_bar.anchor_bottom = 1.0
+	_reload_bar.anchor_left   = 0.0
+	_reload_bar.offset_left   = 0.0
+	_reload_bar.offset_right  = 0.0
+	_reload_bar.offset_top    = -83.0
+	_reload_bar.offset_bottom = -80.0
+	_reload_bar.color         = Color(0.18, 0.72, 0.38, 0.9)
+	_reload_bar.mouse_filter  = Control.MOUSE_FILTER_IGNORE
+	_reload_bar.visible       = false
+	add_child(_reload_bar)
+
+func _on_reload_started(duration: float) -> void:
+	if not _reload_bar:
+		return
+	if _reload_tween and _reload_tween.is_valid():
+		_reload_tween.kill()
+	var vp_w := get_viewport().get_visible_rect().size.x
+	_reload_bar.offset_right = 0.0
+	_reload_bar.visible      = true
+	_reload_tween = create_tween()
+	_reload_tween.tween_property(_reload_bar, "offset_right", vp_w, duration)
+	_reload_tween.tween_callback(func():
+		_reload_bar.visible       = false
+		_reload_bar.offset_right  = 0.0)
 
 func _build_damage_vignette() -> void:
 	var shader := Shader.new()

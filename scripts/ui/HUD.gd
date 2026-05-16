@@ -38,6 +38,7 @@ var _flag_hud_icons:     Array[Panel]     = []
 var _stamina_bar:        ColorRect        = null
 var _stamina_bg:         ColorRect        = null
 var _suppress_overlay:   ColorRect        = null
+var _scope_overlay:      ColorRect        = null
 
 func _ready() -> void:
 	scoreboard.visible     = false
@@ -196,6 +197,7 @@ func _apply_styles() -> void:
 	_build_minimap_panel()
 	_build_stamina_bar()
 	_build_suppress_overlay()
+	_build_scope_overlay()
 
 func _team_color(team: int) -> Color:
 	match team:
@@ -596,6 +598,47 @@ func _on_suppression_changed(level: float) -> void:
 	if not _suppress_overlay:
 		return
 	_suppress_overlay.color = Color(0.0, 0.0, 0.0, level * 0.18)
+
+func _process(_delta: float) -> void:
+	if not _scope_overlay or not _player:
+		return
+	var wm := _player.get_node_or_null("Head/Camera3D/WeaponManager") as WeaponManager
+	if not wm:
+		_scope_overlay.visible = false
+		return
+	var w := wm.get_current_weapon()
+	_scope_overlay.visible = w != null and w.weapon_name == "SR-98" and _player.is_aiming
+
+func _build_scope_overlay() -> void:
+	var scope := ColorRect.new()
+	scope.name = "ScopeOverlay"
+	scope.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scope.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	scope.visible = false
+	var shader := Shader.new()
+	shader.code = \
+"""shader_type canvas_item;
+uniform float aspect : hint_range(0.5, 3.0) = 1.778;
+
+void fragment() {
+    vec2 uv  = UV - 0.5;
+    uv.x    *= aspect;
+    float d  = length(uv);
+    float r  = 0.30;
+    float outside  = smoothstep(r - 0.006, r + 0.006, d);
+    float vignette = smoothstep(0.0, r, d) * 0.20 * (1.0 - outside);
+    vec2 uvr = UV - 0.5;
+    float gap = 0.036;
+    float h = step(abs(uvr.y), 0.0009) * step(gap, abs(uvr.x)) * (1.0 - outside);
+    float v = step(abs(uvr.x), 0.0009 / aspect) * step(gap, abs(uvr.y)) * (1.0 - outside);
+    float ch = clamp(h + v, 0.0, 1.0);
+    COLOR = vec4(0.0, 0.72, 0.22, outside + ch * 0.90 + vignette);
+}"""
+	var mat := ShaderMaterial.new()
+	mat.shader = shader
+	scope.material = mat
+	add_child(scope)
+	_scope_overlay = scope
 
 func show_objective_message(text: String, duration: float = 3.0) -> void:
 	var label := Label.new()

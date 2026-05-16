@@ -65,6 +65,7 @@ func _update_fov(delta: float, player: PlayerController) -> void:
 	else:
 		target = FOV_DEFAULT
 	fov = lerpf(fov, target, delta * FOV_LERP)
+	_update_dof(delta, player)
 
 # ─── Oscillation de la tête ──────────────────────────────────────────────────
 func _update_bob(delta: float, player: PlayerController) -> void:
@@ -147,6 +148,28 @@ func is_aiming() -> bool:
 	return _is_aiming
 
 # ─── Utilitaire ──────────────────────────────────────────────────────────────
+func _update_dof(delta: float, player: PlayerController) -> void:
+	# DoF léger en visée sniper — flou de fond lointain
+	var wm := player.get_node_or_null("Head/Camera3D/WeaponManager") as WeaponManager
+	var is_sniper := wm != null and wm.get_current_weapon() != null and wm.get_current_weapon().weapon_name == "SR-98"
+	var want_dof  := _is_aiming and is_sniper
+	var env       := get_viewport().find_child("WorldEnvironment", true, false)
+	if not env or not (env as WorldEnvironment).environment:
+		return
+	var e := (env as WorldEnvironment).environment
+	if want_dof and not e.dof_blur_far_enabled:
+		e.dof_blur_far_enabled    = true
+		e.dof_blur_far_distance   = 35.0
+		e.dof_blur_far_transition = 18.0
+		e.dof_blur_far_amount     = 0.04
+		e.dof_blur_near_enabled   = true
+		e.dof_blur_near_distance  = 1.2
+		e.dof_blur_near_transition = 0.5
+		e.dof_blur_near_amount    = 0.02
+	elif not want_dof and e.dof_blur_far_enabled:
+		e.dof_blur_far_enabled  = false
+		e.dof_blur_near_enabled = false
+
 func _get_player() -> PlayerController:
 	var n := get_parent()
 	while n:

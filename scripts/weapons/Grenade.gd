@@ -8,11 +8,25 @@ class_name Grenade
 
 var _owner_id: int = 1
 var _exploded: bool = false
+var _body_mat: StandardMaterial3D = null
+var _fuse_elapsed: float = 0.0
+var _blink_t: float = 0.0
 
 func _ready() -> void:
 	_build_visual()
 	await get_tree().create_timer(fuse_time).timeout
 	explode()
+
+func _process(delta: float) -> void:
+	if _exploded or not _body_mat:
+		return
+	_fuse_elapsed += delta
+	var remaining := fuse_time - _fuse_elapsed
+	if remaining < 1.2:
+		_blink_t += delta * (1.0 / maxf(remaining, 0.08)) * 6.0
+		var pulse := (sin(_blink_t) * 0.5 + 0.5)
+		_body_mat.emission = Color(1.0, 0.12, 0.04) * pulse * 2.5
+		_body_mat.emission_energy_multiplier = 1.0 + pulse * 3.0
 
 func _build_visual() -> void:
 	# Corps cylindrique de la grenade
@@ -23,10 +37,13 @@ func _build_visual() -> void:
 	cyl.height        = 0.11
 	mi.mesh = cyl
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.12, 0.18, 0.10)
-	mat.metallic     = 0.45
-	mat.roughness    = 0.6
+	mat.albedo_color     = Color(0.12, 0.18, 0.10)
+	mat.metallic         = 0.45
+	mat.roughness        = 0.6
+	mat.emission_enabled = true
+	mat.emission         = Color(0, 0, 0)
 	mi.material_override = mat
+	_body_mat = mat
 	add_child(mi)
 	# Anneau de sécurité
 	var ring_mi  := MeshInstance3D.new()

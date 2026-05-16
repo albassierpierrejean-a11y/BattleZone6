@@ -15,6 +15,7 @@ func _ready() -> void:
 		visible = false
 		return
 	_build()
+	_build_name_tag(player)
 
 func _build() -> void:
 	# Corps principal
@@ -44,6 +45,20 @@ func _build() -> void:
 	# Bras droit
 	_add(CapsuleMesh.new(), Vector3(0.34, 1.05, 0), COLOR_UNIFORM,
 		func(m: CapsuleMesh): m.radius = 0.065; m.height = 0.62)
+
+func _build_name_tag(player: PlayerController) -> void:
+	var label := Label3D.new()
+	label.text        = player.player_name
+	label.font_size   = 28
+	label.billboard   = BaseMaterial3D.BILLBOARD_ENABLED
+	label.no_depth_test = false
+	label.position    = Vector3(0, 2.15, 0)
+	# Couleur selon l'équipe
+	match player.team:
+		GameManager.Team.ALPHA: label.modulate = Color(0.35, 0.72, 1.0, 0.9)
+		GameManager.Team.BRAVO: label.modulate = Color(1.0, 0.32, 0.28, 0.9)
+		_:                      label.modulate = Color(0.88, 0.92, 0.80, 0.9)
+	add_child(label)
 
 func _add(mesh: Mesh, pos: Vector3, color: Color, configure: Callable) -> void:
 	configure.call(mesh)

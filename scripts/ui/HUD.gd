@@ -607,7 +607,10 @@ func _process(_delta: float) -> void:
 		_scope_overlay.visible = false
 		return
 	var w := wm.get_current_weapon()
-	_scope_overlay.visible = w != null and w.weapon_name == "SR-98" and _player.is_aiming
+	var scoped := w != null and w.weapon_name == "SR-98" and _player.is_aiming
+	_scope_overlay.visible = scoped
+	if crosshair:
+		crosshair.visible = not scoped
 
 func _build_scope_overlay() -> void:
 	var scope := ColorRect.new()

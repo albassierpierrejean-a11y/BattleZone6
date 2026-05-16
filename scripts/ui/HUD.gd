@@ -44,6 +44,9 @@ var _vignette_tween:     Tween            = null
 var _low_health_t:       float            = 0.0
 var _reload_bar:         ColorRect        = null
 var _reload_tween:       Tween            = null
+var _crosshair_lines:    Array[ColorRect] = []
+var _crosshair_base_pos: Array[Vector2]   = []
+var _spread:             float            = 0.0
 
 func _ready() -> void:
 	scoreboard.visible     = false
@@ -197,10 +200,15 @@ func _apply_styles() -> void:
 		round_timer.add_theme_color_override("font_color", Color(0.88, 0.92, 0.88, 1.0))
 		round_timer.add_theme_font_size_override("font_size", 28)
 
-	# ── Viseur — colore tous les enfants (le point existe déjà dans la scène) ──
+	# ── Viseur — colore et mémorise les lignes du crosshair ──
 	if crosshair:
+		_crosshair_lines.clear()
+		_crosshair_base_pos.clear()
 		for child in crosshair.get_children():
-			child.color = Color(0.85, 1.0, 0.88, 0.9)
+			if child is ColorRect:
+				child.color = Color(0.85, 1.0, 0.88, 0.9)
+				_crosshair_lines.append(child as ColorRect)
+				_crosshair_base_pos.append((child as ColorRect).position)
 
 	# ── Bordure de la minimap ──
 	if minimap:
@@ -404,6 +412,7 @@ func _process(delta: float) -> void:
 	_update_scope(delta)
 	_update_low_health_vignette(delta)
 	_update_vehicle_hud()
+	_update_crosshair_spread(delta)
 
 func link_player(player: PlayerController) -> void:
 	_player = player
@@ -434,6 +443,8 @@ func _connect_weapon_signals(player: PlayerController) -> void:
 			w.hit_confirmed.connect(_on_hit_confirmed)
 		if not w.reload_started.is_connected(_on_reload_started):
 			w.reload_started.connect(_on_reload_started)
+		if not w.fired.is_connected(_on_weapon_fired):
+			w.fired.connect(_on_weapon_fired)
 
 func _on_health_changed(current: float, max_hp: float) -> void:
 	_update_health_display(current, max_hp)
@@ -686,6 +697,19 @@ func _update_scope(_delta: float) -> void:
 	_scope_overlay.visible = scoped
 	if crosshair:
 		crosshair.visible = not scoped
+
+func _on_weapon_fired() -> void:
+	_spread = minf(_spread + 6.0, 18.0)
+
+func _update_crosshair_spread(delta: float) -> void:
+	_spread = maxf(_spread - delta * 22.0, 0.0)
+	if _crosshair_lines.is_empty():
+		return
+	# Les 4 directions: [0]=haut, [1]=droite, [2]=bas, [3]=gauche
+	var dirs := [Vector2(0, -1), Vector2(1, 0), Vector2(0, 1), Vector2(-1, 0)]
+	for i in mini(_crosshair_lines.size(), 4):
+		if i < _crosshair_base_pos.size():
+			_crosshair_lines[i].position = _crosshair_base_pos[i] + dirs[i] * _spread
 
 func _build_reload_bar() -> void:
 	# Barre de rechargement fine sous le compteur de munitions (coin bas droit)

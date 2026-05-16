@@ -50,14 +50,39 @@ func _build_visuals() -> void:
 		pole_mat.roughness    = 0.28
 		flag_pole_mi.material_override = pole_mat
 
-	# ── Mesh du drapeau ──
+	# ── Mesh du drapeau avec shader d'ondulation ──
 	if flag_mesh:
-		var fb := BoxMesh.new()
-		fb.size = Vector3(0.62, 0.36, 0.025)
+		var fb := PlaneMesh.new()
+		fb.size = Vector2(0.65, 0.38)
+		fb.subdivide_width  = 8
+		fb.subdivide_depth  = 4
+		fb.orientation = PlaneMesh.FACE_Z
 		flag_mesh.mesh = fb
-		_flag_mat = StandardMaterial3D.new()
-		_flag_mat.emission_enabled = true
-		flag_mesh.material_override = _flag_mat
+		flag_mesh.position = Vector3(0.33, 3.8, 0.0)
+		var flag_shader := Shader.new()
+		flag_shader.code = """
+shader_type spatial;
+render_mode cull_disabled;
+uniform vec4 flag_color : source_color = vec4(0.65, 0.65, 0.65, 1.0);
+uniform float wave_speed : hint_range(0.5, 5.0) = 2.2;
+uniform float wave_amp   : hint_range(0.0, 0.2) = 0.055;
+
+void vertex() {
+	float wave = sin(VERTEX.x * 6.0 + TIME * wave_speed) * wave_amp * VERTEX.x;
+	VERTEX.z += wave;
+}
+
+void fragment() {
+	ALBEDO    = flag_color.rgb;
+	EMISSION  = flag_color.rgb * 0.28;
+	ROUGHNESS = 0.85;
+}
+"""
+		var flag_smat := ShaderMaterial.new()
+		flag_smat.shader = flag_shader
+		flag_smat.set_shader_parameter("flag_color", Color(0.65, 0.65, 0.65, 1.0))
+		flag_mesh.material_override = flag_smat
+		_flag_mat = null
 
 	# ── Disque indicateur de base ──
 	if team_indicator:
@@ -110,9 +135,10 @@ func set_capture_progress(progress: float, team: int) -> void:
 
 func _update_visual() -> void:
 	var color: Color = TEAM_COLORS.get(owner_team, Color.GRAY)
-	if _flag_mat:
-		_flag_mat.albedo_color = color
-		_flag_mat.emission     = color * 0.35
+	if flag_mesh:
+		var smat := flag_mesh.material_override as ShaderMaterial
+		if smat:
+			smat.set_shader_parameter("flag_color", color)
 	if _indicator_mat:
 		_indicator_mat.albedo_color = color
 		_indicator_mat.emission     = color * 0.55
@@ -124,8 +150,6 @@ func _update_visual() -> void:
 		_outer_ring_mat.emission = color * 0.9
 
 func _process(delta: float) -> void:
-	if flag_mesh:
-		flag_mesh.rotate_y(delta * 0.55)
 	_pulse_t += delta * 1.4
 	if _outer_ring:
 		var s := 1.0 + sin(_pulse_t) * 0.06

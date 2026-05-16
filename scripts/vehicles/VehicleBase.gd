@@ -32,16 +32,36 @@ var _driver: Node  = null
 var _steer_input: float = 0.0
 var _is_destroyed: bool = false
 
+var _exhaust: CPUParticles3D = null
+
 func _ready() -> void:
 	hp = max_health
 	seats.resize(num_seats)
 	seats.fill(null)
 	add_to_group("vehicles")
 	_setup_camera()
+	_build_exhaust()
 
 func _setup_camera() -> void:
 	if camera:
 		camera.current = false
+
+func _build_exhaust() -> void:
+	_exhaust = CPUParticles3D.new()
+	_exhaust.name             = "ExhaustSmoke"
+	_exhaust.one_shot         = false
+	_exhaust.amount           = 8
+	_exhaust.lifetime         = 1.2
+	_exhaust.initial_velocity_min = 0.5
+	_exhaust.initial_velocity_max = 1.8
+	_exhaust.spread           = 18.0
+	_exhaust.gravity          = Vector3(0.0, 1.2, 0.0)
+	_exhaust.scale_amount_min = 0.12
+	_exhaust.scale_amount_max = 0.42
+	_exhaust.color            = Color(0.22, 0.20, 0.18, 0.55)
+	_exhaust.position         = Vector3(0, 0.8, -2.8)
+	_exhaust.emitting         = false
+	add_child(_exhaust)
 
 func _physics_process(delta: float) -> void:
 	if _is_destroyed or not _driver:
@@ -79,6 +99,8 @@ func _update_engine_sound() -> void:
 	var speed_ratio := linear_velocity.length() / max_speed
 	engine_sound.pitch_scale = lerp(0.8, 1.8, speed_ratio)
 	engine_sound.volume_db = linear_to_db(0.3 + speed_ratio * 0.7)
+	if _exhaust:
+		_exhaust.emitting = speed_ratio > 0.05
 
 func try_enter(player: Node) -> bool:
 	var seat := _find_empty_seat()

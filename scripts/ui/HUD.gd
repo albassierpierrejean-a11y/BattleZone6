@@ -39,6 +39,9 @@ var _stamina_bar:        ColorRect        = null
 var _stamina_bg:         ColorRect        = null
 var _suppress_overlay:   ColorRect        = null
 var _scope_overlay:      ColorRect        = null
+var _damage_vignette:    ColorRect        = null
+var _vignette_tween:     Tween            = null
+var _low_health_t:       float            = 0.0
 
 func _ready() -> void:
 	scoreboard.visible     = false
@@ -197,6 +200,7 @@ func _apply_styles() -> void:
 	_build_minimap_panel()
 	_build_stamina_bar()
 	_build_suppress_overlay()
+	_build_damage_vignette()
 	_build_scope_overlay()
 
 func _team_color(team: int) -> Color:
@@ -358,13 +362,15 @@ func _connect_signals() -> void:
 	GameManager.player_died_event.connect(_on_kill_event)
 	GameManager.game_state_changed.connect(_on_game_state_changed)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("scoreboard"):
 		scoreboard.visible = true
 	if Input.is_action_just_released("scoreboard"):
 		scoreboard.visible = false
 	_update_minimap()
 	_update_flag_hud()
+	_update_scope(delta)
+	_update_low_health_vignette(delta)
 
 func link_player(player: PlayerController) -> void:
 	_player = player
@@ -418,6 +424,7 @@ func _on_damaged(_amount: float, source_id: int) -> void:
 		hit_indicator.modulate.a = 0.45
 		var tween := create_tween()
 		tween.tween_property(hit_indicator, "modulate:a", 0.0, 0.55)
+	_flash_damage_vignette()
 	_show_damage_direction(source_id)
 
 func _show_damage_direction(source_id: int) -> void:
@@ -599,7 +606,7 @@ func _on_suppression_changed(level: float) -> void:
 		return
 	_suppress_overlay.color = Color(0.0, 0.0, 0.0, level * 0.18)
 
-func _process(_delta: float) -> void:
+func _update_scope(_delta: float) -> void:
 	if not _scope_overlay or not _player:
 		return
 	var wm := _player.get_node_or_null("Head/Camera3D/WeaponManager") as WeaponManager
@@ -611,6 +618,59 @@ func _process(_delta: float) -> void:
 	_scope_overlay.visible = scoped
 	if crosshair:
 		crosshair.visible = not scoped
+
+func _build_damage_vignette() -> void:
+	var shader := Shader.new()
+	shader.code = """
+shader_type canvas_item;
+uniform vec4 tint : source_color = vec4(0.85, 0.05, 0.05, 0.0);
+void fragment() {
+	vec2 uv = UV - 0.5;
+	float d = dot(uv, uv) * 4.0;
+	COLOR = vec4(tint.rgb, tint.a * smoothstep(0.0, 1.0, d));
+}
+"""
+	var mat := ShaderMaterial.new()
+	mat.shader = shader
+	_damage_vignette = ColorRect.new()
+	_damage_vignette.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_damage_vignette.material    = mat
+	_damage_vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_damage_vignette.color        = Color(1, 1, 1, 0)
+	add_child(_damage_vignette)
+
+func _update_low_health_vignette(delta: float) -> void:
+	if not _damage_vignette or not _player:
+		return
+	var hp_pct := 1.0
+	if _player.health and "hp" in _player.health:
+		hp_pct = clampf(_player.health.hp / _player.health.max_health, 0.0, 1.0)
+	if hp_pct < 0.30:
+		_low_health_t += delta * 2.2
+		var pulse := (sin(_low_health_t) * 0.5 + 0.5) * (0.30 - hp_pct) / 0.30
+		var mat := _damage_vignette.material as ShaderMaterial
+		if mat:
+			mat.set_shader_parameter("tint", Color(0.85, 0.05, 0.05, pulse * 0.55))
+	else:
+		_low_health_t = 0.0
+		if _vignette_tween == null or not _vignette_tween.is_valid():
+			var mat := _damage_vignette.material as ShaderMaterial
+			if mat:
+				mat.set_shader_parameter("tint", Color(0.85, 0.05, 0.05, 0.0))
+
+func _flash_damage_vignette() -> void:
+	if not _damage_vignette:
+		return
+	if _vignette_tween and _vignette_tween.is_valid():
+		_vignette_tween.kill()
+	var mat := _damage_vignette.material as ShaderMaterial
+	if not mat:
+		return
+	mat.set_shader_parameter("tint", Color(0.85, 0.05, 0.05, 0.72))
+	_vignette_tween = create_tween()
+	_vignette_tween.tween_method(
+		func(a: float): mat.set_shader_parameter("tint", Color(0.85, 0.05, 0.05, a)),
+		0.72, 0.0, 0.5)
 
 func _build_scope_overlay() -> void:
 	var scope := ColorRect.new()

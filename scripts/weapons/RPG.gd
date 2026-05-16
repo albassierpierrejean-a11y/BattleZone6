@@ -21,15 +21,12 @@ func _ready() -> void:
 	super._ready()
 
 func _cast_bullet(origin: Vector3, dir: Vector3) -> void:
-	if not rocket_scene:
-		_do_instant_explosion(origin + dir * 2.0)
-		return
-	var rocket: Node3D = rocket_scene.instantiate()
+	var rocket := RocketProjectile.new()
 	get_tree().current_scene.add_child(rocket)
 	rocket.global_position = origin + dir * 0.5
-	rocket.look_at(origin + dir * 100.0, Vector3.UP)
-	if rocket.has_method("launch"):
-		rocket.launch(dir, rocket_speed, explosion_radius, explosion_damage, multiplayer.get_unique_id())
+	if dir.length_squared() > 0.01:
+		rocket.look_at(rocket.global_position + dir, Vector3.UP)
+	rocket.launch(dir, rocket_speed, explosion_radius, explosion_damage, multiplayer.get_unique_id())
 
 func _do_instant_explosion(pos: Vector3) -> void:
 	_spawn_explosion_vfx(pos, explosion_radius)

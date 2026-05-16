@@ -188,6 +188,7 @@ func _play_effects() -> void:
 	if muzzle_flash:
 		muzzle_flash.restart()
 	_flash_muzzle_light()
+	_eject_shell()
 
 func _apply_recoil() -> void:
 	var cam := _get_camera()
@@ -385,6 +386,40 @@ func _build_effects() -> void:
 	flash.emitting     = false
 	muzzle.add_child(flash)
 	muzzle_flash = flash
+
+func _eject_shell() -> void:
+	if not muzzle:
+		return
+	var root := get_tree().current_scene
+	if not root:
+		return
+	var shell := RigidBody3D.new()
+	shell.gravity_scale = 1.0
+	var mi := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius    = 0.004
+	cyl.bottom_radius = 0.004
+	cyl.height        = 0.016
+	mi.mesh = cyl
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.80, 0.62, 0.18)
+	mat.metallic     = 0.88
+	mat.roughness    = 0.22
+	mi.material_override = mat
+	shell.add_child(mi)
+	var col := CollisionShape3D.new()
+	var csh := SphereShape3D.new()
+	csh.radius = 0.006
+	col.shape = csh
+	shell.add_child(col)
+	root.add_child(shell)
+	shell.global_position = muzzle.global_position
+	# Éjecte vers la droite de l'arme avec une impulsion aléatoire
+	var basis := muzzle.global_transform.basis
+	var eject_dir := basis.x * randf_range(1.8, 2.8) + basis.y * randf_range(0.6, 1.4) + basis.z * randf_range(-0.5, 0.5)
+	shell.apply_central_impulse(eject_dir * shell.mass)
+	shell.apply_torque_impulse(Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * 0.002)
+	get_tree().create_timer(4.0).timeout.connect(func(): if is_instance_valid(shell): shell.queue_free())
 
 func _flash_muzzle_light() -> void:
 	if not muzzle:

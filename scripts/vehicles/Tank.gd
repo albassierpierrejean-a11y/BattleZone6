@@ -32,6 +32,110 @@ func _ready() -> void:
 	num_seats        = 2
 	exit_offsets     = [Vector3(0, 1.5, -2), Vector3(0, 1.5, 1.5)]
 	super._ready()
+	_build_mesh()
+
+func _build_mesh() -> void:
+	var steel := StandardMaterial3D.new()
+	steel.albedo_color = Color(0.25, 0.30, 0.20)
+	steel.roughness    = 0.82
+	steel.metallic     = 0.22
+
+	var track_mat := StandardMaterial3D.new()
+	track_mat.albedo_color = Color(0.13, 0.13, 0.11)
+	track_mat.roughness    = 0.98
+
+	# ── Hull ─────────────────────────────────────────────────────────────────
+	var hull := MeshInstance3D.new()
+	var hull_bm := BoxMesh.new()
+	hull_bm.size = Vector3(3.2, 0.9, 5.8)
+	hull.mesh = hull_bm
+	hull.position = Vector3(0, 0.58, 0)
+	hull.material_override = steel
+	add_child(hull)
+
+	# Glacis (front slope)
+	var glacis := MeshInstance3D.new()
+	var glacis_bm := BoxMesh.new()
+	glacis_bm.size = Vector3(3.0, 0.7, 1.1)
+	glacis.mesh = glacis_bm
+	glacis.position = Vector3(0, 0.85, 2.85)
+	glacis.rotation.x = -0.38
+	glacis.material_override = steel
+	add_child(glacis)
+
+	# Rear engine deck
+	var deck := MeshInstance3D.new()
+	var deck_bm := BoxMesh.new()
+	deck_bm.size = Vector3(3.0, 0.18, 1.4)
+	deck.mesh = deck_bm
+	deck.position = Vector3(0, 1.05, -2.4)
+	deck.material_override = steel
+	add_child(deck)
+
+	# ── Tracks ───────────────────────────────────────────────────────────────
+	for s in [-1, 1]:
+		var track := MeshInstance3D.new()
+		var track_bm := BoxMesh.new()
+		track_bm.size = Vector3(0.65, 0.72, 6.4)
+		track.mesh = track_bm
+		track.position = Vector3(s * 1.76, 0.36, 0)
+		track.material_override = track_mat
+		add_child(track)
+		# Road wheels
+		for k in 4:
+			var wm := MeshInstance3D.new()
+			var wc := CylinderMesh.new()
+			wc.top_radius    = 0.36
+			wc.bottom_radius = 0.36
+			wc.height        = 0.55
+			wm.mesh = wc
+			wm.position = Vector3(s * 1.80, 0.32, -2.1 + k * 1.4)
+			wm.rotation.z = PI * 0.5
+			wm.material_override = track_mat
+			add_child(wm)
+
+	# ── Turret body ───────────────────────────────────────────────────────────
+	if turret:
+		var t_mi := MeshInstance3D.new()
+		var t_bm := BoxMesh.new()
+		t_bm.size = Vector3(2.05, 0.82, 2.25)
+		t_mi.mesh = t_bm
+		t_mi.material_override = steel
+		turret.add_child(t_mi)
+		# Commander hatch
+		var hatch := MeshInstance3D.new()
+		var hatch_c := CylinderMesh.new()
+		hatch_c.top_radius    = 0.26
+		hatch_c.bottom_radius = 0.26
+		hatch_c.height        = 0.14
+		hatch.mesh = hatch_c
+		hatch.position = Vector3(-0.4, 0.48, 0)
+		hatch.material_override = steel
+		turret.add_child(hatch)
+
+	# ── Cannon tube ───────────────────────────────────────────────────────────
+	if cannon:
+		var tube := MeshInstance3D.new()
+		var tube_c := CylinderMesh.new()
+		tube_c.top_radius    = 0.065
+		tube_c.bottom_radius = 0.09
+		tube_c.height        = 4.0
+		tube.mesh = tube_c
+		tube.position = Vector3(0, 0, -2.0)
+		tube.rotation.x = PI * 0.5
+		tube.material_override = steel
+		cannon.add_child(tube)
+		# Muzzle brake
+		var mb := MeshInstance3D.new()
+		var mb_c := CylinderMesh.new()
+		mb_c.top_radius    = 0.12
+		mb_c.bottom_radius = 0.12
+		mb_c.height        = 0.30
+		mb.mesh = mb_c
+		mb.position = Vector3(0, 0, -3.95)
+		mb.rotation.x = PI * 0.5
+		mb.material_override = steel
+		cannon.add_child(mb)
 
 func _input(event: InputEvent) -> void:
 	if not _driver or not _driver.is_multiplayer_authority():

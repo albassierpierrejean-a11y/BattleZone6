@@ -42,6 +42,138 @@ func _ready() -> void:
 	seats.resize(num_seats)
 	seats.fill(null)
 	add_to_group("vehicles")
+	_build_mesh()
+
+func _build_mesh() -> void:
+	var heli_mat := StandardMaterial3D.new()
+	heli_mat.albedo_color = Color(0.20, 0.26, 0.18)
+	heli_mat.roughness    = 0.75
+	heli_mat.metallic     = 0.18
+
+	var glass_mat := StandardMaterial3D.new()
+	glass_mat.albedo_color = Color(0.30, 0.52, 0.78, 0.38)
+	glass_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass_mat.roughness    = 0.04
+	glass_mat.metallic     = 0.12
+
+	var skid_mat := StandardMaterial3D.new()
+	skid_mat.albedo_color = Color(0.16, 0.16, 0.15)
+	skid_mat.roughness    = 0.80
+	skid_mat.metallic     = 0.50
+
+	# ── Fuselage ─────────────────────────────────────────────────────────────
+	var body := MeshInstance3D.new()
+	var body_cap := CapsuleMesh.new()
+	body_cap.radius = 0.88
+	body_cap.height = 4.2
+	body.mesh = body_cap
+	body.rotation.x = PI * 0.5
+	body.material_override = heli_mat
+	add_child(body)
+
+	# Cockpit nose
+	var nose := MeshInstance3D.new()
+	var nose_sph := SphereMesh.new()
+	nose_sph.radius = 0.72
+	nose_sph.height = 1.5
+	nose.mesh = nose_sph
+	nose.position = Vector3(0, 0, 2.1)
+	nose.material_override = heli_mat
+	add_child(nose)
+
+	# Cockpit glass
+	var glass := MeshInstance3D.new()
+	var glass_sph := SphereMesh.new()
+	glass_sph.radius = 0.56
+	glass_sph.height = 0.9
+	glass.mesh = glass_sph
+	glass.position = Vector3(0, 0.12, 2.25)
+	glass.material_override = glass_mat
+	add_child(glass)
+
+	# ── Tail boom ────────────────────────────────────────────────────────────
+	var tail := MeshInstance3D.new()
+	var tail_c := CylinderMesh.new()
+	tail_c.top_radius    = 0.16
+	tail_c.bottom_radius = 0.50
+	tail_c.height        = 4.4
+	tail.mesh = tail_c
+	tail.position = Vector3(0, 0.22, -3.2)
+	tail.rotation.x = PI * 0.5
+	tail.material_override = heli_mat
+	add_child(tail)
+
+	# Tail fin
+	var fin := MeshInstance3D.new()
+	var fin_bm := BoxMesh.new()
+	fin_bm.size = Vector3(0.07, 1.0, 1.1)
+	fin.mesh = fin_bm
+	fin.position = Vector3(0, 0.55, -5.2)
+	fin.material_override = heli_mat
+	add_child(fin)
+
+	# ── Tail rotor blades ────────────────────────────────────────────────────
+	var blade_mat := StandardMaterial3D.new()
+	blade_mat.albedo_color = Color(0.07, 0.07, 0.07)
+	blade_mat.roughness    = 0.92
+
+	for s in [-1, 1]:
+		var tb := MeshInstance3D.new()
+		var tb_bm := BoxMesh.new()
+		tb_bm.size = Vector3(0.05, 0.75, 0.10)
+		tb.mesh = tb_bm
+		tb.position = Vector3(s * 0.36, 0.52, -5.25)
+		tb.material_override = blade_mat
+		add_child(tb)
+
+	# ── Main rotor (attached to rotor node if it exists) ─────────────────────
+	var rotor_node: Node3D = get_node_or_null("Rotor")
+	var blade_root: Node3D = rotor_node if rotor_node else self
+	var blade_offset := Vector3.ZERO if rotor_node else Vector3(0, 1.15, 0)
+	for b in 2:
+		var blade := MeshInstance3D.new()
+		var blade_bm := BoxMesh.new()
+		blade_bm.size = Vector3(5.8, 0.05, 0.36)
+		blade.mesh = blade_bm
+		blade.position = blade_offset
+		blade.rotation.y = b * PI * 0.5
+		blade.material_override = blade_mat
+		blade_root.add_child(blade)
+
+	# Rotor hub
+	var hub := MeshInstance3D.new()
+	var hub_c := CylinderMesh.new()
+	hub_c.top_radius    = 0.18
+	hub_c.bottom_radius = 0.18
+	hub_c.height        = 0.22
+	hub.mesh = hub_c
+	hub.position = blade_offset + Vector3(0, 0.1, 0)
+	hub.material_override = skid_mat
+	blade_root.add_child(hub)
+
+	# ── Landing skids ────────────────────────────────────────────────────────
+	for s in [-1, 1]:
+		var runner := MeshInstance3D.new()
+		var runner_c := CylinderMesh.new()
+		runner_c.top_radius    = 0.04
+		runner_c.bottom_radius = 0.04
+		runner_c.height        = 4.2
+		runner.mesh = runner_c
+		runner.position = Vector3(s * 1.05, -0.92, 0)
+		runner.rotation.x = PI * 0.5
+		runner.material_override = skid_mat
+		add_child(runner)
+		for z_off in [1.3, -1.3]:
+			var strut := MeshInstance3D.new()
+			var strut_c := CylinderMesh.new()
+			strut_c.top_radius    = 0.04
+			strut_c.bottom_radius = 0.04
+			strut_c.height        = 1.1
+			strut.mesh = strut_c
+			strut.position = Vector3(s * 0.85, -0.44, z_off)
+			strut.rotation.z = s * 0.28
+			strut.material_override = skid_mat
+			add_child(strut)
 
 func _input(event: InputEvent) -> void:
 	if not _pilot or not _pilot.is_multiplayer_authority():

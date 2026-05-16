@@ -27,6 +27,30 @@ func _cast_bullet(origin: Vector3, dir: Vector3) -> void:
 	if dir.length_squared() > 0.01:
 		rocket.look_at(rocket.global_position + dir, Vector3.UP)
 	rocket.launch(dir, rocket_speed, explosion_radius, explosion_damage, multiplayer.get_unique_id())
+	_spawn_backblast(origin, dir)
+
+func _spawn_backblast(origin: Vector3, dir: Vector3) -> void:
+	var root := get_tree().current_scene
+	if not root:
+		return
+	var blast := CPUParticles3D.new()
+	root.add_child(blast)
+	blast.global_position      = origin - dir * 0.4
+	blast.one_shot             = true
+	blast.explosiveness        = 0.98
+	blast.amount               = 28
+	blast.lifetime             = 0.55
+	blast.initial_velocity_min = 4.0
+	blast.initial_velocity_max = 10.0
+	blast.spread               = 35.0
+	blast.gravity              = Vector3(0.0, -4.0, 0.0)
+	blast.scale_amount_min     = 0.06
+	blast.scale_amount_max     = 0.22
+	blast.color                = Color(0.88, 0.68, 0.24, 0.90)
+	if dir.length_squared() > 0.01:
+		blast.look_at(origin - dir * 10.0)
+	blast.emitting = true
+	get_tree().create_timer(2.0).timeout.connect(func(): if is_instance_valid(blast): blast.queue_free())
 
 func _do_instant_explosion(pos: Vector3) -> void:
 	_spawn_explosion_vfx(pos, explosion_radius)

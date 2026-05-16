@@ -239,6 +239,7 @@ func _apply_styles() -> void:
 	_build_minimap_panel()
 	_build_stamina_bar()
 	_build_suppress_overlay()
+	_build_cinematic_vignette()
 	_build_damage_vignette()
 	_build_reload_bar()
 	_build_scope_overlay()
@@ -774,6 +775,25 @@ func _on_reload_started(duration: float) -> void:
 	_reload_tween.tween_callback(func():
 		_reload_bar.visible       = false
 		_reload_bar.offset_right  = 0.0)
+
+func _build_cinematic_vignette() -> void:
+	var shader := Shader.new()
+	shader.code = """
+shader_type canvas_item;
+void fragment() {
+	vec2 uv = UV - 0.5;
+	float d = dot(uv, uv) * 3.2;
+	COLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.0, 1.0, d) * 0.52);
+}
+"""
+	var mat := ShaderMaterial.new()
+	mat.shader = shader
+	var vig := ColorRect.new()
+	vig.name = "CinematicVignette"
+	vig.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	vig.material    = mat
+	vig.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(vig)
 
 func _build_damage_vignette() -> void:
 	var shader := Shader.new()

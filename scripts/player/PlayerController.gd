@@ -244,6 +244,29 @@ func _on_landed(impact_speed: float) -> void:
 func _on_footstep() -> void:
 	if AudioManager.has_method("play_footstep"):
 		AudioManager.play_footstep(global_position, state)
+	if _is_sprinting and is_on_floor():
+		_spawn_step_dust()
+
+func _spawn_step_dust() -> void:
+	var root := get_tree().current_scene
+	if not root:
+		return
+	var dust := CPUParticles3D.new()
+	root.add_child(dust)
+	dust.global_position      = global_position + Vector3(0, 0.05, 0)
+	dust.one_shot             = true
+	dust.explosiveness        = 0.85
+	dust.amount               = 5
+	dust.lifetime             = 0.4
+	dust.initial_velocity_min = 0.4
+	dust.initial_velocity_max = 1.4
+	dust.spread               = 70.0
+	dust.gravity              = Vector3(0.0, -1.0, 0.0)
+	dust.scale_amount_min     = 0.04
+	dust.scale_amount_max     = 0.10
+	dust.color                = Color(0.60, 0.50, 0.36, 0.65)
+	dust.emitting             = true
+	get_tree().create_timer(1.5).timeout.connect(func(): if is_instance_valid(dust): dust.queue_free())
 
 # ─── Interactions ─────────────────────────────────────────────────────────────
 func _handle_interactions() -> void:

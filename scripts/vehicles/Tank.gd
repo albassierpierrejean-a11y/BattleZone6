@@ -71,7 +71,7 @@ func _cannon_explosion(origin: Vector3, dir: Vector3) -> void:
 	var pos: Vector3 = origin + dir * CANNON_RANGE
 	if not hit.is_empty():
 		pos = hit["position"]
-
+	_spawn_cannon_vfx(pos)
 	var q := PhysicsShapeQueryParameters3D.new()
 	var sphere := SphereShape3D.new()
 	sphere.radius = CANNON_RADIUS
@@ -90,3 +90,50 @@ func _cannon_explosion(origin: Vector3, dir: Vector3) -> void:
 			collider.take_damage(dmg, multiplayer.get_unique_id())
 		if collider.has_method("apply_damage"):
 			collider.apply_damage(dmg, pos)
+
+func _spawn_cannon_vfx(pos: Vector3) -> void:
+	var root := get_tree().current_scene
+	var fire := CPUParticles3D.new()
+	root.add_child(fire)
+	fire.global_position      = pos
+	fire.one_shot             = true
+	fire.explosiveness        = 0.94
+	fire.amount               = 70
+	fire.lifetime             = 1.1
+	fire.initial_velocity_min = CANNON_RADIUS * 2.0
+	fire.initial_velocity_max = CANNON_RADIUS * 4.5
+	fire.spread               = 90.0
+	fire.gravity              = Vector3(0.0, -5.0, 0.0)
+	fire.scale_amount_min     = 0.14
+	fire.scale_amount_max     = 0.42
+	fire.color                = Color(1.0, 0.55, 0.08, 1.0)
+	fire.emitting             = true
+	get_tree().create_timer(4.0).timeout.connect(func(): if is_instance_valid(fire): fire.queue_free())
+	var smoke := CPUParticles3D.new()
+	root.add_child(smoke)
+	smoke.global_position     = pos
+	smoke.one_shot            = true
+	smoke.explosiveness       = 0.6
+	smoke.amount              = 30
+	smoke.lifetime            = 5.0
+	smoke.initial_velocity_min = 2.0
+	smoke.initial_velocity_max = 7.0
+	smoke.spread              = 40.0
+	smoke.gravity             = Vector3(0.0, 2.0, 0.0)
+	smoke.scale_amount_min    = 0.8
+	smoke.scale_amount_max    = 2.5
+	smoke.color               = Color(0.16, 0.14, 0.12, 0.65)
+	smoke.emitting            = true
+	get_tree().create_timer(7.0).timeout.connect(func(): if is_instance_valid(smoke): smoke.queue_free())
+	var light := OmniLight3D.new()
+	root.add_child(light)
+	light.global_position = pos
+	light.omni_range      = CANNON_RADIUS * 7.0
+	light.light_energy    = 18.0
+	light.light_color     = Color(1.0, 0.65, 0.25)
+	get_tree().create_timer(0.22).timeout.connect(func(): if is_instance_valid(light): light.queue_free())
+	var cam := get_viewport().get_camera_3d()
+	if cam and cam.has_method("add_shake"):
+		var d := cam.global_position.distance_to(pos)
+		if d < CANNON_RADIUS * 10.0:
+			cam.add_shake(clampf(1.0 - d / (CANNON_RADIUS * 10.0), 0.0, 1.0) * 0.06)

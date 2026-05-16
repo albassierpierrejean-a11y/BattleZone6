@@ -159,8 +159,8 @@ func _cast_bullet(origin: Vector3, dir: Vector3) -> void:
 	var query  := PhysicsRayQueryParameters3D.create(origin, origin + dir * range_max)
 	var hit    := space.intersect_ray(query)
 	if hit.is_empty():
-		# Balle dans le vide — suppression des joueurs proches de la trajectoire
 		_notify_suppression_along(origin, dir)
+		_spawn_bullet_trace(origin, origin + dir * minf(range_max, 80.0))
 		return
 
 	var collider   = hit.get("collider")
@@ -181,6 +181,7 @@ func _cast_bullet(origin: Vector3, dir: Vector3) -> void:
 	if collider.has_method("apply_damage"):
 		collider.apply_damage(dmg, hit_pos)
 	_spawn_hit_effect(hit_pos, hit_normal, collider)
+	_spawn_bullet_trace(origin, hit_pos)
 
 func _play_effects() -> void:
 	if shoot_sound and shoot_sound.stream:
@@ -386,6 +387,36 @@ func _build_effects() -> void:
 	flash.emitting     = false
 	muzzle.add_child(flash)
 	muzzle_flash = flash
+
+func _spawn_bullet_trace(from: Vector3, to: Vector3) -> void:
+	var root := get_tree().current_scene
+	if not root:
+		return
+	var length := from.distance_to(to)
+	if length < 0.5:
+		return
+	var mid    := (from + to) * 0.5
+	var mi     := MeshInstance3D.new()
+	var cyl    := CylinderMesh.new()
+	cyl.top_radius    = 0.0018
+	cyl.bottom_radius = 0.0018
+	cyl.height        = length
+	mi.mesh = cyl
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color       = Color(1.0, 0.92, 0.72, 0.45)
+	mat.emission_enabled   = true
+	mat.emission           = Color(1.0, 0.88, 0.55)
+	mat.emission_energy_multiplier = 1.8
+	mat.transparency       = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mi.material_override   = mat
+	root.add_child(mi)
+	mi.global_position = mid
+	if length > 0.01:
+		mi.look_at(to, Vector3.UP)
+		mi.rotate_object_local(Vector3.RIGHT, PI * 0.5)
+	var tween := create_tween()
+	tween.tween_property(mat, "albedo_color:a", 0.0, 0.06)
+	tween.tween_callback(mi.queue_free)
 
 func _eject_shell() -> void:
 	if not muzzle:

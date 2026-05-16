@@ -517,6 +517,17 @@ func _on_player_died(_source: int) -> void:
 		respawn_timer.text = "RESPAWNING IN  %d" % int(GameManager.RESPAWN_TIME - t)
 		await get_tree().process_frame
 	respawn_overlay.visible = false
+	_fade_in_from_black()
+
+func _fade_in_from_black() -> void:
+	var fade := ColorRect.new()
+	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	fade.color       = Color(0, 0, 0, 1)
+	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(fade)
+	var tween := create_tween()
+	tween.tween_property(fade, "color:a", 0.0, 0.85)
+	tween.tween_callback(fade.queue_free)
 
 func _on_ammo_updated(current: int, reserve: int) -> void:
 	if ammo_current: ammo_current.text = str(current)

@@ -154,8 +154,61 @@ func _destroy() -> void:
 			p.exit_vehicle()
 	destroyed.emit()
 	_deactivate_driver_camera()
+	_spawn_destruction_vfx()
 	await get_tree().create_timer(5.0).timeout
 	queue_free()
+
+func _spawn_destruction_vfx() -> void:
+	var root := get_tree().current_scene
+	var pos  := global_position + Vector3.UP * 1.0
+	# Big fireball
+	var fire := CPUParticles3D.new()
+	root.add_child(fire)
+	fire.global_position      = pos
+	fire.one_shot             = true
+	fire.explosiveness        = 0.96
+	fire.amount               = 80
+	fire.lifetime             = 1.4
+	fire.initial_velocity_min = 8.0
+	fire.initial_velocity_max = 22.0
+	fire.spread               = 90.0
+	fire.gravity              = Vector3(0.0, -6.0, 0.0)
+	fire.scale_amount_min     = 0.20
+	fire.scale_amount_max     = 0.70
+	fire.color                = Color(1.0, 0.48, 0.06, 1.0)
+	fire.emitting             = true
+	get_tree().create_timer(5.0).timeout.connect(func(): if is_instance_valid(fire): fire.queue_free())
+	# Heavy black smoke
+	var smoke := CPUParticles3D.new()
+	root.add_child(smoke)
+	smoke.global_position     = pos
+	smoke.one_shot            = false
+	smoke.explosiveness       = 0.1
+	smoke.amount              = 40
+	smoke.lifetime            = 6.0
+	smoke.initial_velocity_min = 2.0
+	smoke.initial_velocity_max = 6.0
+	smoke.spread              = 25.0
+	smoke.gravity             = Vector3(0.0, 2.0, 0.0)
+	smoke.scale_amount_min    = 1.0
+	smoke.scale_amount_max    = 3.5
+	smoke.color               = Color(0.08, 0.07, 0.06, 0.80)
+	smoke.emitting            = true
+	get_tree().create_timer(5.0).timeout.connect(func(): if is_instance_valid(smoke): smoke.queue_free())
+	# Flash light
+	var light := OmniLight3D.new()
+	root.add_child(light)
+	light.global_position = pos
+	light.omni_range      = 20.0
+	light.light_energy    = 25.0
+	light.light_color     = Color(1.0, 0.62, 0.22)
+	get_tree().create_timer(0.25).timeout.connect(func(): if is_instance_valid(light): light.queue_free())
+	# Camera shake
+	var cam := get_viewport().get_camera_3d()
+	if cam and cam.has_method("add_shake"):
+		var d := cam.global_position.distance_to(pos)
+		if d < 60.0:
+			cam.add_shake(clampf(1.0 - d / 60.0, 0.0, 1.0) * 0.08)
 
 @rpc("any_peer", "unreliable_ordered")
 func _sync_vehicle(pos: Vector3, rot: Vector3, lin_vel: Vector3, ang_vel: Vector3) -> void:

@@ -63,6 +63,14 @@ func _setup_hdri_sky() -> void:
 	env.ssao_enabled           = true
 	env.ssao_radius            = 1.2
 	env.ssao_intensity         = 2.0
+	env.ssil_enabled           = true
+	env.ssil_radius            = 5.0
+	env.ssil_intensity         = 0.8
+	env.ssil_sharpness         = 0.9
+	env.sdfgi_enabled          = true
+	env.sdfgi_use_occlusion    = true
+	env.sdfgi_min_cell_size    = 0.2
+	env.sdfgi_energy           = 1.0
 	env.ssr_enabled            = false
 	# Desert atmosphere — subtle sandy haze
 	env.fog_enabled            = true
@@ -301,7 +309,7 @@ func _build_oasis_pool() -> void:
 	rim.add_child(rim_col)
 	add_child(rim)
 
-	# Surface de l'eau (visuel uniquement — pas de collision, les joueurs marchent dessus)
+	# Surface de l'eau — shader animé avec ondulations UV
 	var water := MeshInstance3D.new()
 	water.name = "OasisWater"
 	water.position = Vector3(0, 0.18, 0)
@@ -309,17 +317,36 @@ func _build_oasis_pool() -> void:
 	w_disk.top_radius    = 8.8
 	w_disk.bottom_radius = 8.8
 	w_disk.height        = 0.06
-	w_disk.rings         = 1
+	w_disk.rings         = 8
 	water.mesh = w_disk
-	var w_mat := StandardMaterial3D.new()
-	w_mat.albedo_color   = Color(0.08, 0.28, 0.55, 0.82)
-	w_mat.transparency   = BaseMaterial3D.TRANSPARENCY_ALPHA
-	w_mat.metallic       = 0.0
-	w_mat.roughness      = 0.05
-	w_mat.emission_enabled = true
-	w_mat.emission       = Color(0.04, 0.12, 0.28)
-	w_mat.emission_energy_multiplier = 0.4
+	var water_shader := Shader.new()
+	water_shader.code = """
+shader_type spatial;
+render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_lambert, specular_schlick_ggx;
+uniform float speed : hint_range(0.0, 2.0) = 0.35;
+uniform vec4 water_color : source_color = vec4(0.07, 0.26, 0.52, 0.84);
+uniform float roughness : hint_range(0.0, 1.0) = 0.06;
+uniform float wave_scale : hint_range(0.1, 5.0) = 1.8;
+
+void fragment() {
+	vec2 uv1 = UV * wave_scale + vec2(TIME * speed * 0.7, TIME * speed * 0.5);
+	vec2 uv2 = UV * wave_scale * 1.4 + vec2(-TIME * speed * 0.4, TIME * speed * 0.8);
+	float wave = sin(uv1.x * 6.28 + uv1.y * 4.0) * 0.5
+			   + sin(uv2.x * 5.0 - uv2.y * 7.0) * 0.5;
+	wave = wave * 0.5 + 0.5;
+	vec3 col = mix(water_color.rgb * 0.7, water_color.rgb * 1.15, wave);
+	ALBEDO = col;
+	ALPHA  = water_color.a;
+	ROUGHNESS = roughness;
+	METALLIC  = 0.04;
+	SPECULAR  = 0.85;
+	NORMAL    = normalize(vec3((wave - 0.5) * 0.18, 1.0, (wave - 0.5) * 0.14));
+}
+"""
+	var w_mat := ShaderMaterial.new()
+	w_mat.shader = water_shader
 	water.material_override = w_mat
+	water.transparency = GeometryInstance3D.TRANSPARENCY_ALPHA
 	add_child(water)
 
 	# Fond de pierre peu profond sous l'eau

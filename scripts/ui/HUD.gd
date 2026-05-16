@@ -644,7 +644,7 @@ func _update_low_health_vignette(delta: float) -> void:
 		return
 	var hp_pct := 1.0
 	if _player.health and "hp" in _player.health:
-		hp_pct = clampf(_player.health.hp / _player.health.max_health, 0.0, 1.0)
+		hp_pct = clampf(_player.health.hp / 100.0, 0.0, 1.0)
 	if hp_pct < 0.30:
 		_low_health_t += delta * 2.2
 		var pulse := (sin(_low_health_t) * 0.5 + 0.5) * (0.30 - hp_pct) / 0.30

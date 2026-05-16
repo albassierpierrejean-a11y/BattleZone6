@@ -25,6 +25,10 @@ var _progress: float  = 0.0
 var _name_label: Label3D
 var _flag_mat: StandardMaterial3D
 var _indicator_mat: StandardMaterial3D
+var _beacon_light: OmniLight3D
+var _outer_ring: MeshInstance3D
+var _outer_ring_mat: StandardMaterial3D
+var _pulse_t: float = 0.0
 
 func _ready() -> void:
 	add_to_group("capture_points")
@@ -67,6 +71,29 @@ func _build_visuals() -> void:
 		_indicator_mat.emission_enabled = true
 		team_indicator.material_override = _indicator_mat
 
+	# ── Anneau extérieur animé ──
+	_outer_ring = MeshInstance3D.new()
+	var ring_c := CylinderMesh.new()
+	ring_c.top_radius    = 2.8
+	ring_c.bottom_radius = 2.8
+	ring_c.height        = 0.04
+	ring_c.rings         = 1
+	_outer_ring.mesh = ring_c
+	_outer_ring.position = Vector3(0, 0.03, 0)
+	_outer_ring_mat = StandardMaterial3D.new()
+	_outer_ring_mat.emission_enabled = true
+	_outer_ring_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_outer_ring_mat.albedo_color = Color(1, 1, 1, 0)
+	_outer_ring.material_override = _outer_ring_mat
+	add_child(_outer_ring)
+
+	# ── Beacon lumineux au sommet du mât ──
+	_beacon_light = OmniLight3D.new()
+	_beacon_light.position  = Vector3(0, 4.5, 0)
+	_beacon_light.omni_range = 10.0
+	_beacon_light.light_energy = 2.2
+	add_child(_beacon_light)
+
 	# ── Label du nom (billboard) ──
 	_name_label = Label3D.new()
 	_name_label.text        = point_name
@@ -91,7 +118,21 @@ func _update_visual() -> void:
 		_indicator_mat.emission     = color * 0.55
 	if _name_label:
 		_name_label.modulate = color
+	if _beacon_light:
+		_beacon_light.light_color = color
+	if _outer_ring_mat:
+		_outer_ring_mat.emission = color * 0.9
 
 func _process(delta: float) -> void:
 	if flag_mesh:
 		flag_mesh.rotate_y(delta * 0.55)
+	_pulse_t += delta * 1.4
+	if _outer_ring:
+		var s := 1.0 + sin(_pulse_t) * 0.06
+		_outer_ring.scale = Vector3(s, 1.0, s)
+	if _outer_ring_mat:
+		var alpha := (sin(_pulse_t) * 0.5 + 0.5) * 0.55 + 0.15
+		_outer_ring_mat.albedo_color.a = alpha
+	if _beacon_light:
+		var energy := 1.8 + sin(_pulse_t * 1.8) * 0.45
+		_beacon_light.light_energy = energy

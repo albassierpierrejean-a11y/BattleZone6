@@ -20,6 +20,22 @@ func _ready() -> void:
 	_setup_client()
 	game_mode.timer_updated.connect(_on_timer_updated)
 	game_mode.round_ended.connect(_on_round_ended)
+	_fade_in_start()
+
+func _fade_in_start() -> void:
+	# Fondu noir de démarrage (1 frame de délai pour laisser la scène se charger)
+	await get_tree().process_frame
+	var hud_layer := get_node_or_null("HUDLayer") as CanvasLayer
+	if not hud_layer:
+		return
+	var fade := ColorRect.new()
+	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	fade.color        = Color(0, 0, 0, 1)
+	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud_layer.add_child(fade)
+	var tween := fade.create_tween()
+	tween.tween_property(fade, "color:a", 0.0, 1.2)
+	tween.tween_callback(fade.queue_free)
 
 # ─── Visuels terrain + bâtiments ─────────────────────────────────────────────
 func _setup_visuals() -> void:

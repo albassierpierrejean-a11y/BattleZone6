@@ -437,6 +437,7 @@ func _spawn_map_props() -> void:
 	_spawn_weapon_props()
 	_spawn_health_pickups_oasis()
 	_spawn_ammo_pickups_oasis()
+	_spawn_ambient_lights_oasis()
 
 func _spawn_barrels_oasis() -> void:
 	var positions: Array[Vector3] = [
@@ -505,6 +506,27 @@ func _spawn_sandbags_oasis() -> void:
 		var sb := _make_sandbag_wall(walls[i][0], walls[i][1])
 		sb.name = "Sandbag_%d" % i
 		add_child(sb)
+
+func _spawn_ambient_lights_oasis() -> void:
+	var lights: Array = [
+		# [position, color, range, energy]
+		[Vector3(  0, 3.5,   0), Color(0.55, 0.80, 1.00), 14.0, 1.0],   # oasis centre
+		[Vector3(-75, 3.0,   0), Color(0.65, 0.90, 0.62), 12.0, 0.9],   # Alpha flag
+		[Vector3( 75, 3.0,   0), Color(1.00, 0.32, 0.28), 12.0, 0.9],   # Bravo flag
+		[Vector3(-30, 3.5, -45), Color(0.70, 0.55, 1.00),  9.0, 0.7],   # Flag B ruins
+		[Vector3( 30, 3.5,  45), Color(0.70, 0.55, 1.00),  9.0, 0.7],   # Flag D ruins
+		[Vector3(  0, 4.0, -65), Color(0.80, 0.75, 0.60),  7.0, 0.6],   # North rocks
+		[Vector3(  0, 4.0,  65), Color(0.80, 0.75, 0.60),  7.0, 0.6],   # South rocks
+	]
+	for i in lights.size():
+		var l := OmniLight3D.new()
+		l.name           = "OasisLight_%d" % i
+		l.position       = lights[i][0]
+		l.light_color    = lights[i][1]
+		l.omni_range     = lights[i][2]
+		l.light_energy   = lights[i][3]
+		l.shadow_enabled = false
+		add_child(l)
 
 func _spawn_weapon_props() -> void:
 	if not ResourceLoader.exists(AK74_GLB):

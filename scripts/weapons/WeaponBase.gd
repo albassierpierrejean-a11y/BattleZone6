@@ -53,6 +53,7 @@ var _burst_remaining:int   = 0
 var _fire_kick:  float   = 0.0
 var _reload_dip: Vector3 = Vector3.ZERO
 var _anim_tween: Tween   = null
+var _idle_t:     float   = 0.0
 var anim_offset: Vector3 = Vector3.ZERO   # lu par WeaponManager
 var anim_rot_x:  float   = 0.0            # lu par WeaponManager
 
@@ -93,7 +94,9 @@ func _process(delta: float) -> void:
 
 func _update_anim(delta: float) -> void:
 	_fire_kick  = lerpf(_fire_kick, 0.0, delta * 16.0)
-	anim_offset = Vector3(0.0, _fire_kick * -0.008, _fire_kick * 0.048) + _reload_dip
+	_idle_t    += delta * 0.9
+	var idle := Vector3(sin(_idle_t * 0.62) * 0.0012, sin(_idle_t) * 0.0018, 0.0)
+	anim_offset = Vector3(0.0, _fire_kick * -0.008, _fire_kick * 0.048) + _reload_dip + idle
 	anim_rot_x  = _fire_kick * -0.04
 
 func _handle_input() -> void:

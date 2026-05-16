@@ -74,8 +74,31 @@ func reset() -> void:
 func _die(source_id: int) -> void:
 	_is_dead = true
 	died.emit(source_id)
+	_spawn_death_vfx()
 	if _player.has_method("die"):
 		_player.die(source_id)
+
+func _spawn_death_vfx() -> void:
+	if not is_instance_valid(_player):
+		return
+	var root := get_tree().current_scene
+	var pos  := _player.global_position + Vector3.UP * 0.9
+	var blood := CPUParticles3D.new()
+	root.add_child(blood)
+	blood.global_position      = pos
+	blood.one_shot             = true
+	blood.explosiveness        = 0.85
+	blood.amount               = 22
+	blood.lifetime             = 0.7
+	blood.initial_velocity_min = 2.5
+	blood.initial_velocity_max = 7.0
+	blood.spread               = 65.0
+	blood.gravity              = Vector3(0.0, -14.0, 0.0)
+	blood.scale_amount_min     = 0.022
+	blood.scale_amount_max     = 0.058
+	blood.color                = Color(0.65, 0.03, 0.03, 1.0)
+	blood.emitting             = true
+	get_tree().create_timer(2.5).timeout.connect(func(): if is_instance_valid(blood): blood.queue_free())
 
 func is_dead() -> bool:
 	return _is_dead

@@ -88,11 +88,110 @@ func _setup_visuals() -> void:
 
 # ─── Props 3D : barils, caisses, sacs de sable, pickups ──────────────────────
 func _spawn_map_props() -> void:
+	_spawn_terrain_features()
 	_spawn_barrels()
 	_spawn_crates()
 	_spawn_sandbags()
 	_spawn_health_pickups()
 	_spawn_ammo_pickups()
+
+func _spawn_terrain_features() -> void:
+	var rock_mat := _make_pbr_material(
+		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_Color.png",
+		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_NormalGL.png",
+		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_Roughness.png",
+		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_AmbientOcclusion.png", 2.0)
+	var rock_positions: Array[Vector3] = [
+		Vector3(-30, 0, 15), Vector3(-25, 0, -18), Vector3(30, 0, 12),
+		Vector3(26, 0, -20), Vector3(-45, 0, 8),  Vector3(44, 0, -9),
+		Vector3(0, 0, 30),   Vector3(0, 0, -32),  Vector3(-38, 0, -12),
+		Vector3(38, 0, 14),
+	]
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 42
+	for i in rock_positions.size():
+		var pos := rock_positions[i]
+		var sz  := Vector3(rng.randf_range(1.5, 3.5), rng.randf_range(0.9, 2.2), rng.randf_range(1.2, 2.8))
+		var sb  := StaticBody3D.new()
+		sb.position = pos + Vector3(0, sz.y * 0.5 - 0.25, 0)
+		sb.rotation.y = rng.randf_range(0, TAU)
+		var mi  := MeshInstance3D.new()
+		var bm  := BoxMesh.new()
+		bm.size = sz
+		mi.mesh = bm
+		mi.material_override = rock_mat
+		sb.add_child(mi)
+		var col := CollisionShape3D.new()
+		var cs  := BoxShape3D.new()
+		cs.size = sz
+		col.shape = cs
+		sb.add_child(col)
+		add_child(sb)
+		sb.name = "Rock_%d" % i
+
+	var tree_positions: Array[Vector3] = [
+		Vector3(-42, 0, 20), Vector3(-38, 0, 28), Vector3(-44, 0, -22),
+		Vector3(42, 0, 18),  Vector3(40, 0, -26), Vector3(46, 0, 6),
+		Vector3(-15, 0, 38), Vector3(15, 0, -38), Vector3(0, 0, 42),
+		Vector3(-20, 0, -40), Vector3(22, 0, 40),
+	]
+	for i in tree_positions.size():
+		var pos := tree_positions[i]
+		rng.seed = 100 + i
+		var h := rng.randf_range(3.5, 6.0)
+		var tree := _make_tree(pos, h, rng)
+		tree.name = "Tree_%d" % i
+		add_child(tree)
+
+func _make_tree(pos: Vector3, height: float, rng: RandomNumberGenerator) -> Node3D:
+	var root := Node3D.new()
+	root.position = pos
+
+	var trunk_mat := StandardMaterial3D.new()
+	trunk_mat.albedo_color = Color(0.32, 0.22, 0.14)
+	trunk_mat.roughness    = 0.95
+
+	var trunk_mi  := MeshInstance3D.new()
+	var trunk_cyl := CylinderMesh.new()
+	trunk_cyl.top_radius    = 0.12
+	trunk_cyl.bottom_radius = 0.18
+	trunk_cyl.height        = height * 0.55
+	trunk_mi.mesh = trunk_cyl
+	trunk_mi.position = Vector3(0, height * 0.55 * 0.5, 0)
+	trunk_mi.material_override = trunk_mat
+	root.add_child(trunk_mi)
+
+	var leaf_mat := StandardMaterial3D.new()
+	leaf_mat.albedo_color = Color(
+		rng.randf_range(0.08, 0.15),
+		rng.randf_range(0.28, 0.40),
+		rng.randf_range(0.08, 0.16))
+	leaf_mat.roughness = 0.92
+
+	for layer in 3:
+		var ly_mi  := MeshInstance3D.new()
+		var ly_sph := SphereMesh.new()
+		var r := rng.randf_range(1.1, 1.8) - layer * 0.22
+		ly_sph.radius = r
+		ly_sph.height = r * 2.0
+		ly_mi.mesh = ly_sph
+		ly_mi.material_override = leaf_mat
+		ly_mi.position = Vector3(
+			rng.randf_range(-0.2, 0.2),
+			height * 0.52 + layer * r * 0.75,
+			rng.randf_range(-0.2, 0.2))
+		root.add_child(ly_mi)
+
+	var col := CollisionShape3D.new()
+	var csh := CylinderShape3D.new()
+	csh.radius = 0.18
+	csh.height = height
+	col.shape  = csh
+	col.position = Vector3(0, height * 0.5, 0)
+	var sb := StaticBody3D.new()
+	sb.add_child(col)
+	root.add_child(sb)
+	return root
 
 func _add_capture_paving() -> void:
 	var pave_mat := _make_pbr_material(

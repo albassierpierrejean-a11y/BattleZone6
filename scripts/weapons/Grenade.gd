@@ -26,6 +26,7 @@ func explode() -> void:
 	queue_free()
 
 func _do_explosion() -> void:
+	_spawn_explosion_vfx(global_position, explosion_radius)
 	var space := get_world_3d().direct_space_state
 	var query := PhysicsShapeQueryParameters3D.new()
 	var sphere := SphereShape3D.new()
@@ -45,3 +46,50 @@ func _do_explosion() -> void:
 			collider.take_damage(dmg, _owner_id)
 		if collider.has_method("apply_damage"):
 			collider.apply_damage(dmg, global_position)
+
+func _spawn_explosion_vfx(pos: Vector3, radius: float) -> void:
+	var root := get_tree().current_scene
+	var fire := CPUParticles3D.new()
+	root.add_child(fire)
+	fire.global_position      = pos
+	fire.one_shot             = true
+	fire.explosiveness        = 0.92
+	fire.amount               = 45
+	fire.lifetime             = 0.85
+	fire.initial_velocity_min = radius * 1.5
+	fire.initial_velocity_max = radius * 3.0
+	fire.spread               = 90.0
+	fire.gravity              = Vector3(0.0, -4.0, 0.0)
+	fire.scale_amount_min     = 0.08
+	fire.scale_amount_max     = 0.26
+	fire.color                = Color(1.0, 0.55, 0.08, 1.0)
+	fire.emitting             = true
+	get_tree().create_timer(3.0).timeout.connect(func(): if is_instance_valid(fire): fire.queue_free())
+	var smoke := CPUParticles3D.new()
+	root.add_child(smoke)
+	smoke.global_position     = pos
+	smoke.one_shot            = true
+	smoke.explosiveness       = 0.5
+	smoke.amount              = 20
+	smoke.lifetime            = 3.0
+	smoke.initial_velocity_min = 1.2
+	smoke.initial_velocity_max = 4.5
+	smoke.spread              = 40.0
+	smoke.gravity             = Vector3(0.0, 1.5, 0.0)
+	smoke.scale_amount_min    = 0.5
+	smoke.scale_amount_max    = 1.6
+	smoke.color               = Color(0.18, 0.16, 0.14, 0.68)
+	smoke.emitting            = true
+	get_tree().create_timer(5.0).timeout.connect(func(): if is_instance_valid(smoke): smoke.queue_free())
+	var light := OmniLight3D.new()
+	root.add_child(light)
+	light.global_position = pos
+	light.omni_range      = radius * 5.0
+	light.light_energy    = 12.0
+	light.light_color     = Color(1.0, 0.68, 0.28)
+	get_tree().create_timer(0.18).timeout.connect(func(): if is_instance_valid(light): light.queue_free())
+	var cam := get_viewport().get_camera_3d()
+	if cam and cam.has_method("add_shake"):
+		var d := cam.global_position.distance_to(pos)
+		if d < radius * 6.0:
+			cam.add_shake(clampf(1.0 - d / (radius * 6.0), 0.0, 1.0) * 0.055)

@@ -42,10 +42,22 @@ func _ready() -> void:
 	add_to_group("vehicles")
 	_setup_camera()
 	_build_exhaust()
+	_build_interact_prompt()
 
 func _setup_camera() -> void:
 	if camera:
 		camera.current = false
+
+func _build_interact_prompt() -> void:
+	var label := Label3D.new()
+	label.name          = "InteractPrompt"
+	label.text          = "[E] Monter"
+	label.font_size     = 32
+	label.billboard     = BaseMaterial3D.BILLBOARD_ENABLED
+	label.no_depth_test = true
+	label.position      = Vector3(0, 2.8, 0)
+	label.modulate      = Color(0.92, 0.96, 0.82, 0.0)
+	add_child(label)
 
 func _build_exhaust() -> void:
 	_exhaust = CPUParticles3D.new()
@@ -65,6 +77,7 @@ func _build_exhaust() -> void:
 	add_child(_exhaust)
 
 func _physics_process(delta: float) -> void:
+	_update_interact_prompt()
 	if _is_destroyed or not _driver:
 		_apply_idle(delta)
 		return
@@ -74,6 +87,21 @@ func _physics_process(delta: float) -> void:
 	_update_engine_sound()
 	_spawn_tire_tracks(delta)
 	_sync_vehicle.rpc(global_position, global_rotation, linear_velocity, angular_velocity)
+
+func _update_interact_prompt() -> void:
+	var prompt := get_node_or_null("InteractPrompt") as Label3D
+	if not prompt:
+		return
+	var local_player := get_tree().get_first_node_in_group("local_player") as Node3D
+	if not local_player:
+		prompt.modulate.a = 0.0
+		return
+	var dist := global_position.distance_to(local_player.global_position)
+	var occupied := is_occupied()
+	var target_alpha := 0.0
+	if not occupied and dist < 5.0:
+		target_alpha = clampf(1.0 - (dist - 2.0) / 3.0, 0.0, 1.0)
+	prompt.modulate.a = lerpf(prompt.modulate.a, target_alpha, 0.15)
 
 func _handle_drive_input(delta: float) -> void:
 	var throttle := Input.get_axis("move_backward", "move_forward")

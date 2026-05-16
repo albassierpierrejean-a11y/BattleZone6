@@ -1,0 +1,183 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://scripts/maps/MapManager.gd" id="1_mm"]
+[ext_resource type="PackedScene" path="res://scenes/ui/HUD.tscn" id="8_hud"]
+[ext_resource type="Script" path="res://scripts/networking/PlayerSpawner.gd" id="2_spawner"]
+[ext_resource type="Script" path="res://scripts/game_modes/Conquest.gd" id="3_conquest"]
+[ext_resource type="Script" path="res://scripts/networking/LagCompensation.gd" id="4_lag"]
+[ext_resource type="Script" path="res://scripts/maps/CapturePoint.gd" id="5_cp"]
+[ext_resource type="Script" path="res://scripts/destruction/Destructible.gd" id="6_dest"]
+[ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="7_player"]
+[ext_resource type="Script" path="res://scripts/maps/BattlefieldEnvironment.gd" id="9_bfenv"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
+size = Vector3(200, 0.5, 200)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wall"]
+size = Vector3(10, 4, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_building"]
+size = Vector3(8, 6, 8)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_flag"]
+radius = 6.0
+
+[node name="TestMap" type="Node3D"]
+script = ExtResource("1_mm")
+player_scene = ExtResource("7_player")
+hud_scene = ExtResource("8_hud")
+
+[node name="PlayerSpawner" type="Node" parent="."]
+script = ExtResource("2_spawner")
+
+[node name="Players" type="Node3D" parent="."]
+
+[node name="GameMode" type="Node" parent="."]
+script = ExtResource("3_conquest")
+
+[node name="LagCompensation" type="Node" parent="."]
+script = ExtResource("4_lag")
+
+[node name="HUDLayer" type="CanvasLayer" parent="."]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+script = ExtResource("9_bfenv")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.707, -0.5, 0.5, 0, 0.707, 0.707, -0.707, -0.5, 0.5, 0, 10, 0)
+light_energy = 2.2
+light_color = Color(1.0, 0.96, 0.88)
+shadow_enabled = true
+directional_shadow_mode = 2
+directional_shadow_split_1 = 0.1
+directional_shadow_split_2 = 0.3
+directional_shadow_split_3 = 0.6
+directional_shadow_fade_start = 0.85
+
+[node name="Ground" type="StaticBody3D" parent="."]
+
+[node name="GroundMesh" type="MeshInstance3D" parent="Ground"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
+
+[node name="GroundCollision" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("BoxShape3D_ground")
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="AlphaSpawn1" type="Node3D" parent="SpawnPoints"]
+position = Vector3(-40, 1, 0)
+
+[node name="AlphaSpawn2" type="Node3D" parent="SpawnPoints"]
+position = Vector3(-40, 1, 10)
+
+[node name="AlphaSpawn3" type="Node3D" parent="SpawnPoints"]
+position = Vector3(-35, 1, -10)
+
+[node name="BravoSpawn1" type="Node3D" parent="SpawnPoints"]
+position = Vector3(40, 1, 0)
+
+[node name="BravoSpawn2" type="Node3D" parent="SpawnPoints"]
+position = Vector3(40, 1, 10)
+
+[node name="BravoSpawn3" type="Node3D" parent="SpawnPoints"]
+position = Vector3(35, 1, -10)
+
+[node name="CapturePoints" type="Node3D" parent="."]
+
+[node name="FlagA" type="Node3D" parent="CapturePoints"]
+position = Vector3(-20, 0, 0)
+script = ExtResource("5_cp")
+flag_id = 0
+point_name = "Alpha Base"
+start_team = 1
+
+[node name="FlagPole" type="MeshInstance3D" parent="CapturePoints/FlagA"]
+position = Vector3(0, 2, 0)
+
+[node name="FlagMesh" type="MeshInstance3D" parent="CapturePoints/FlagA/FlagPole"]
+position = Vector3(0, 1.5, 0)
+
+[node name="TeamIndicator" type="MeshInstance3D" parent="CapturePoints/FlagA"]
+
+[node name="CaptureArea" type="Area3D" parent="CapturePoints/FlagA"]
+
+[node name="CaptureCollision" type="CollisionShape3D" parent="CapturePoints/FlagA/CaptureArea"]
+shape = SubResource("SphereShape3D_flag")
+
+[node name="FlagB" type="Node3D" parent="CapturePoints"]
+position = Vector3(0, 0, 0)
+script = ExtResource("5_cp")
+flag_id = 1
+point_name = "Mid"
+start_team = 0
+
+[node name="FlagPole" type="MeshInstance3D" parent="CapturePoints/FlagB"]
+position = Vector3(0, 2, 0)
+
+[node name="FlagMesh" type="MeshInstance3D" parent="CapturePoints/FlagB/FlagPole"]
+position = Vector3(0, 1.5, 0)
+
+[node name="TeamIndicator" type="MeshInstance3D" parent="CapturePoints/FlagB"]
+
+[node name="CaptureArea" type="Area3D" parent="CapturePoints/FlagB"]
+
+[node name="CaptureCollision" type="CollisionShape3D" parent="CapturePoints/FlagB/CaptureArea"]
+shape = SubResource("SphereShape3D_flag")
+
+[node name="FlagC" type="Node3D" parent="CapturePoints"]
+position = Vector3(20, 0, 0)
+script = ExtResource("5_cp")
+flag_id = 2
+point_name = "Bravo Base"
+start_team = 2
+
+[node name="FlagPole" type="MeshInstance3D" parent="CapturePoints/FlagC"]
+position = Vector3(0, 2, 0)
+
+[node name="FlagMesh" type="MeshInstance3D" parent="CapturePoints/FlagC/FlagPole"]
+position = Vector3(0, 1.5, 0)
+
+[node name="TeamIndicator" type="MeshInstance3D" parent="CapturePoints/FlagC"]
+
+[node name="CaptureArea" type="Area3D" parent="CapturePoints/FlagC"]
+
+[node name="CaptureCollision" type="CollisionShape3D" parent="CapturePoints/FlagC/CaptureArea"]
+shape = SubResource("SphereShape3D_flag")
+
+[node name="Buildings" type="Node3D" parent="."]
+
+[node name="Building1" type="StaticBody3D" parent="Buildings"]
+position = Vector3(-10, 3, 5)
+script = ExtResource("6_dest")
+max_health = 300.0
+
+[node name="Mesh" type="MeshInstance3D" parent="Buildings/Building1"]
+
+[node name="Collision" type="CollisionShape3D" parent="Buildings/Building1"]
+shape = SubResource("BoxShape3D_building")
+
+[node name="Building2" type="StaticBody3D" parent="Buildings"]
+position = Vector3(10, 3, -5)
+script = ExtResource("6_dest")
+max_health = 300.0
+
+[node name="Mesh" type="MeshInstance3D" parent="Buildings/Building2"]
+
+[node name="Collision" type="CollisionShape3D" parent="Buildings/Building2"]
+shape = SubResource("BoxShape3D_building")
+
+[node name="Wall1" type="StaticBody3D" parent="Buildings"]
+position = Vector3(-5, 2, -8)
+
+[node name="Mesh" type="MeshInstance3D" parent="Buildings/Wall1"]
+
+[node name="Collision" type="CollisionShape3D" parent="Buildings/Wall1"]
+shape = SubResource("BoxShape3D_wall")
+
+[node name="Wall2" type="StaticBody3D" parent="Buildings"]
+position = Vector3(5, 2, 8)
+
+[node name="Mesh" type="MeshInstance3D" parent="Buildings/Wall2"]
+
+[node name="Collision" type="CollisionShape3D" parent="Buildings/Wall2"]
+shape = SubResource("BoxShape3D_wall")

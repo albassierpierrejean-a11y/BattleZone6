@@ -1,0 +1,71 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/PlayerController.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/player/PlayerHealth.gd" id="2_health"]
+[ext_resource type="Script" path="res://scripts/player/PlayerCamera.gd" id="3_camera"]
+[ext_resource type="Script" path="res://scripts/weapons/WeaponManager.gd" id="4_wm"]
+[ext_resource type="Script" path="res://scripts/weapons/AssaultRifle.gd" id="5_ar"]
+[ext_resource type="Script" path="res://scripts/weapons/Pistol.gd" id="6_pistol"]
+[ext_resource type="Script" path="res://scripts/player/SuppressSystem.gd" id="7_suppress"]
+[ext_resource type="Script" path="res://scripts/player/PlayerBody.gd" id="8_body"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+radius = 0.35
+height = 1.8
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_1"]
+radius = 3.5
+
+[node name="Player" type="CharacterBody3D"]
+script = ExtResource("1_player")
+
+[node name="PlayerBody" type="Node3D" parent="."]
+script = ExtResource("8_body")
+
+[node name="Capsule" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_1")
+
+[node name="PlayerHealth" type="Node" parent="."]
+script = ExtResource("2_health")
+
+[node name="SuppressSystem" type="Node" parent="."]
+script = ExtResource("7_suppress")
+
+[node name="Head" type="Node3D" parent="."]
+position = Vector3(0, 1.6, 0)
+
+[node name="Camera3D" type="Camera3D" parent="Head"]
+script = ExtResource("3_camera")
+current = true
+fov = 75.0
+
+[node name="WeaponManager" type="Node3D" parent="Head/Camera3D"]
+script = ExtResource("4_wm")
+position = Vector3(0.15, -0.15, -0.3)
+
+[node name="AssaultRifle" type="Node3D" parent="Head/Camera3D/WeaponManager"]
+script = ExtResource("5_ar")
+
+[node name="Muzzle" type="Marker3D" parent="Head/Camera3D/WeaponManager/AssaultRifle"]
+position = Vector3(0, 0, -0.5)
+
+[node name="Pistol" type="Node3D" parent="Head/Camera3D/WeaponManager"]
+script = ExtResource("6_pistol")
+visible = false
+
+[node name="Muzzle" type="Marker3D" parent="Head/Camera3D/WeaponManager/Pistol"]
+position = Vector3(0, 0, -0.3)
+
+[node name="InteractArea" type="Area3D" parent="."]
+
+[node name="InteractCollision" type="CollisionShape3D" parent="InteractArea"]
+shape = SubResource("SphereShape3D_1")
+
+[node name="FootstepTimer" type="Timer" parent="."]
+wait_time = 0.45
+autostart = false
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+root_path = NodePath("..")
+replication_config = null

@@ -1,0 +1,271 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/HUD.gd"                    id="1_hud"]
+[ext_resource type="Shader"  path="res://assets/shaders/hud_vignette.gdshader"  id="2_vig"]
+[ext_resource type="Shader"  path="res://assets/shaders/post_process.gdshader"  id="3_pp"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_pp"]
+shader = ExtResource("3_pp")
+shader_parameter/sharpness    = 0.65
+shader_parameter/saturation   = 1.12
+shader_parameter/contrast     = 1.06
+shader_parameter/brightness   = 0.98
+shader_parameter/vignette_str = 0.0
+shader_parameter/grain_str    = 0.018
+shader_parameter/chrom_aber   = 0.0015
+shader_parameter/suppress_str = 0.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vig"]
+shader = ExtResource("2_vig")
+shader_parameter/strength = 0.85
+shader_parameter/radius   = 0.72
+shader_parameter/tint     = Color(0.0, 0.0, 0.0, 1.0)
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+layer = 2
+
+[node name="PostProcess" type="ColorRect" parent="."]
+anchors_preset = 15
+material       = SubResource("ShaderMaterial_pp")
+color          = Color(1.0, 1.0, 1.0, 1.0)
+mouse_filter   = 2
+
+[node name="Vignette" type="ColorRect" parent="."]
+anchors_preset = 15
+material = SubResource("ShaderMaterial_vig")
+color = Color(1.0, 1.0, 1.0, 1.0)
+mouse_filter = 2
+
+[node name="Top" type="HBoxContainer" parent="."]
+anchor_right  = 1.0
+offset_left   = 0.0
+offset_top    = 4.0
+offset_right  = 0.0
+offset_bottom = 54.0
+theme_override_constants/separation = 8
+
+[node name="AlphaTickets" type="Label" parent="Top"]
+custom_minimum_size = Vector2(120.0, 0.0)
+text = "300"
+horizontal_alignment = 1
+theme_override_colors/font_color    = Color(0.3, 0.7, 1.0, 1.0)
+theme_override_font_sizes/font_size = 28
+
+[node name="Spacer1" type="Control" parent="Top"]
+size_flags_horizontal = 3
+
+[node name="FlagIcons" type="HBoxContainer" parent="Top"]
+custom_minimum_size = Vector2(80.0, 0.0)
+theme_override_constants/separation = 8
+
+[node name="RoundTimer" type="Label" parent="Top"]
+custom_minimum_size = Vector2(150.0, 0.0)
+text = "15:00"
+horizontal_alignment = 1
+theme_override_colors/font_color    = Color(1.0, 1.0, 1.0, 1.0)
+theme_override_font_sizes/font_size = 30
+
+[node name="Spacer2" type="Control" parent="Top"]
+size_flags_horizontal = 3
+
+[node name="BravoTickets" type="Label" parent="Top"]
+custom_minimum_size = Vector2(120.0, 0.0)
+text = "300"
+horizontal_alignment = 1
+theme_override_colors/font_color    = Color(1.0, 0.35, 0.35, 1.0)
+theme_override_font_sizes/font_size = 28
+
+[node name="TopRight" type="Control" parent="."]
+anchor_left   = 1.0
+anchor_right  = 1.0
+offset_left   = -300.0
+offset_right  = -8.0
+offset_top    = 60.0
+offset_bottom = 340.0
+
+[node name="KillFeed" type="VBoxContainer" parent="TopRight"]
+anchor_right  = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 3
+
+[node name="Bottom" type="HBoxContainer" parent="."]
+anchor_left   = 0.0
+anchor_right  = 1.0
+anchor_top    = 1.0
+anchor_bottom = 1.0
+offset_left   = 16.0
+offset_right  = -16.0
+offset_top    = -70.0
+offset_bottom = -12.0
+theme_override_constants/separation = 12
+
+[node name="HealthBar" type="ProgressBar" parent="Bottom"]
+custom_minimum_size = Vector2(160.0, 18.0)
+size_flags_vertical = 4
+max_value = 100.0
+value    = 100.0
+
+[node name="ArmorBar" type="ProgressBar" parent="Bottom"]
+custom_minimum_size = Vector2(90.0, 18.0)
+size_flags_vertical = 4
+max_value = 100.0
+value    = 100.0
+
+[node name="HealthLabel" type="Label" parent="Bottom"]
+size_flags_vertical = 4
+text = "100"
+theme_override_colors/font_color    = Color(0.3, 1.0, 0.3, 1.0)
+theme_override_font_sizes/font_size = 20
+
+[node name="BottomSpacer" type="Control" parent="Bottom"]
+size_flags_horizontal = 3
+
+[node name="AmmoBox" type="HBoxContainer" parent="Bottom"]
+size_flags_vertical = 4
+theme_override_constants/separation = 5
+
+[node name="CurrentAmmo" type="Label" parent="Bottom/AmmoBox"]
+text = "30"
+theme_override_colors/font_color    = Color(1.0, 1.0, 1.0, 1.0)
+theme_override_font_sizes/font_size = 36
+
+[node name="ReserveAmmo" type="Label" parent="Bottom/AmmoBox"]
+text = "/ 120"
+vertical_alignment = 2
+theme_override_colors/font_color    = Color(0.55, 0.55, 0.55, 1.0)
+theme_override_font_sizes/font_size = 18
+
+[node name="WeaponName" type="Label" parent="Bottom"]
+size_flags_vertical = 4
+text = "M4A1"
+theme_override_colors/font_color    = Color(0.8, 0.8, 0.8, 1.0)
+theme_override_font_sizes/font_size = 16
+
+[node name="Crosshair" type="Control" parent="."]
+anchor_left   = 0.5
+anchor_right  = 0.5
+anchor_top    = 0.5
+anchor_bottom = 0.5
+offset_left   = -50.0
+offset_right  = 50.0
+offset_top    = -50.0
+offset_bottom = 50.0
+mouse_filter  = 2
+
+[node name="Left" type="ColorRect" parent="Crosshair"]
+color    = Color(1.0, 1.0, 1.0, 0.88)
+position = Vector2(22.0, 47.0)
+size     = Vector2(14.0, 6.0)
+
+[node name="Right" type="ColorRect" parent="Crosshair"]
+color    = Color(1.0, 1.0, 1.0, 0.88)
+position = Vector2(64.0, 47.0)
+size     = Vector2(14.0, 6.0)
+
+[node name="Up" type="ColorRect" parent="Crosshair"]
+color    = Color(1.0, 1.0, 1.0, 0.88)
+position = Vector2(47.0, 22.0)
+size     = Vector2(6.0, 14.0)
+
+[node name="Down" type="ColorRect" parent="Crosshair"]
+color    = Color(1.0, 1.0, 1.0, 0.88)
+position = Vector2(47.0, 64.0)
+size     = Vector2(6.0, 14.0)
+
+[node name="Dot" type="ColorRect" parent="Crosshair"]
+color    = Color(1.0, 1.0, 1.0, 0.88)
+position = Vector2(48.0, 48.0)
+size     = Vector2(4.0, 4.0)
+
+[node name="HitIndicator" type="ColorRect" parent="."]
+anchors_preset = 15
+color    = Color(0.78, 0.05, 0.05, 0.45)
+modulate = Color(1.0, 1.0, 1.0, 0.0)
+mouse_filter = 2
+
+[node name="Scoreboard" type="PanelContainer" parent="."]
+visible       = false
+anchor_left   = 0.1
+anchor_right  = 0.9
+anchor_top    = 0.08
+anchor_bottom = 0.92
+mouse_filter  = 2
+
+[node name="Minimap" type="SubViewportContainer" parent="."]
+anchor_top    = 1.0
+anchor_bottom = 1.0
+offset_left   = 12.0
+offset_right  = 212.0
+offset_top    = -278.0
+offset_bottom = -88.0
+stretch       = true
+
+[node name="SubViewport" type="SubViewport" parent="Minimap"]
+size = Vector2i(200, 190)
+
+[node name="VehicleHUD" type="VBoxContainer" parent="."]
+visible       = false
+anchor_left   = 0.5
+anchor_right  = 0.5
+anchor_top    = 1.0
+anchor_bottom = 1.0
+offset_left   = -160.0
+offset_right  = 160.0
+offset_top    = -80.0
+offset_bottom = -8.0
+theme_override_constants/separation = 5
+
+[node name="VehicleHP" type="ProgressBar" parent="VehicleHUD"]
+custom_minimum_size = Vector2(320.0, 16.0)
+max_value = 100.0
+value    = 100.0
+
+[node name="SpeedLabel" type="Label" parent="VehicleHUD"]
+text = "0 km/h"
+horizontal_alignment = 1
+theme_override_colors/font_color    = Color(1.0, 0.85, 0.2, 1.0)
+theme_override_font_sizes/font_size = 18
+
+[node name="RespawnOverlay" type="Control" parent="."]
+visible      = false
+anchors_preset = 15
+mouse_filter = 2
+
+[node name="BG" type="ColorRect" parent="RespawnOverlay"]
+anchors_preset = 15
+color        = Color(0.0, 0.0, 0.0, 0.62)
+mouse_filter = 2
+
+[node name="TimerLabel" type="Label" parent="RespawnOverlay"]
+anchor_left   = 0.0
+anchor_right  = 1.0
+anchor_top    = 0.5
+anchor_bottom = 0.5
+offset_top    = -40.0
+offset_bottom = 40.0
+text = "RESPAWNING IN 5"
+horizontal_alignment = 1
+vertical_alignment   = 1
+theme_override_colors/font_color    = Color(1.0, 1.0, 1.0, 1.0)
+theme_override_font_sizes/font_size = 42
+
+[node name="KillStreak" type="Control" parent="."]
+anchor_left   = 0.5
+anchor_right  = 0.5
+anchor_top    = 0.32
+anchor_bottom = 0.32
+offset_left   = -220.0
+offset_right  = 220.0
+offset_top    = -35.0
+offset_bottom = 35.0
+mouse_filter  = 2
+
+[node name="Label" type="Label" parent="KillStreak"]
+anchor_right  = 1.0
+anchor_bottom = 1.0
+text = "DOUBLE KILL!"
+horizontal_alignment = 1
+vertical_alignment   = 1
+theme_override_colors/font_color    = Color(1.0, 0.85, 0.1, 1.0)
+theme_override_font_sizes/font_size = 36

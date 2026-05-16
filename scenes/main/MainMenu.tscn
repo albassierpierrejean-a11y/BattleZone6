@@ -1,0 +1,335 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script"  path="res://scripts/ui/MainMenu.gd"                        id="1_menu"]
+[ext_resource type="Shader"  path="res://assets/shaders/menu_background.gdshader"        id="2_bgsh"]
+[ext_resource type="Shader"  path="res://assets/shaders/panel_diagonal.gdshader"         id="3_pansh"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bg"]
+shader = ExtResource("2_bgsh")
+shader_parameter/grid_alpha   = 0.055
+shader_parameter/scan_alpha   = 0.04
+shader_parameter/vig_strength = 1.4
+shader_parameter/scroll_speed = 0.18
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_panel"]
+shader = ExtResource("3_pansh")
+shader_parameter/panel_color  = Color(0.03, 0.05, 0.09, 0.94)
+shader_parameter/edge_color   = Color(0.18, 0.72, 0.38, 1.0)
+shader_parameter/edge_width   = 0.004
+shader_parameter/diag_slope   = 0.22
+shader_parameter/panel_width  = 0.88
+shader_parameter/noise_amount = 0.008
+
+[node name="MainMenu" type="CanvasLayer"]
+script = ExtResource("1_menu")
+
+[node name="Background" type="ColorRect" parent="."]
+anchors_preset = 15
+color = Color(0.018, 0.022, 0.035, 1.0)
+material = SubResource("ShaderMaterial_bg")
+mouse_filter = 2
+
+[node name="LeftPanel" type="ColorRect" parent="."]
+anchor_top    = 0.0
+anchor_bottom = 1.0
+offset_right  = 560.0
+material = SubResource("ShaderMaterial_panel")
+mouse_filter = 2
+
+[node name="TopAccentLine" type="ColorRect" parent="."]
+anchor_right  = 1.0
+offset_bottom = 1.0
+color = Color(0.18, 0.72, 0.38, 0.22)
+mouse_filter = 2
+
+[node name="BottomAccentLine" type="ColorRect" parent="."]
+anchor_right  = 1.0
+anchor_top    = 1.0
+anchor_bottom = 1.0
+offset_top    = -1.0
+color = Color(0.18, 0.72, 0.38, 0.22)
+mouse_filter = 2
+
+[node name="CornerTL" type="Control" parent="."]
+offset_right  = 60.0
+offset_bottom = 60.0
+mouse_filter  = 2
+
+[node name="H" type="ColorRect" parent="CornerTL"]
+offset_right  = 40.0
+offset_bottom = 1.0
+color = Color(0.18, 0.72, 0.38, 0.55)
+mouse_filter  = 2
+
+[node name="V" type="ColorRect" parent="CornerTL"]
+offset_right  = 1.0
+offset_bottom = 40.0
+color = Color(0.18, 0.72, 0.38, 0.55)
+mouse_filter  = 2
+
+[node name="CornerBR" type="Control" parent="."]
+anchor_left   = 1.0
+anchor_right  = 1.0
+anchor_top    = 1.0
+anchor_bottom = 1.0
+offset_left   = -60.0
+offset_top    = -60.0
+mouse_filter  = 2
+
+[node name="H" type="ColorRect" parent="CornerBR"]
+anchor_right  = 1.0
+anchor_left   = 0.0
+offset_left   = -40.0
+offset_right  = 0.0
+offset_top    = 59.0
+offset_bottom = 60.0
+color = Color(0.18, 0.72, 0.38, 0.55)
+mouse_filter  = 2
+
+[node name="V" type="ColorRect" parent="CornerBR"]
+anchor_left   = 1.0
+anchor_right  = 1.0
+offset_left   = -1.0
+offset_top    = 20.0
+offset_bottom = 60.0
+color = Color(0.18, 0.72, 0.38, 0.55)
+mouse_filter  = 2
+
+[node name="ContentArea" type="VBoxContainer" parent="."]
+offset_left   = 48.0
+offset_right  = 480.0
+offset_top    = 72.0
+offset_bottom = 980.0
+theme_override_constants/separation = 0
+
+[node name="TagLine" type="Label" parent="ContentArea"]
+text = "·  ALPHA-7 CLEARANCE REQUIRED  ·"
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.18, 0.72, 0.38, 0.6)
+
+[node name="TitleSpacer" type="Control" parent="ContentArea"]
+custom_minimum_size = Vector2(0, 18)
+
+[node name="TitleBATTLE" type="Label" parent="ContentArea"]
+text = "BATTLE"
+theme_override_font_sizes/font_size = 72
+theme_override_colors/font_color = Color(0.88, 0.96, 0.90, 1.0)
+
+[node name="TitleZONE" type="HBoxContainer" parent="ContentArea"]
+theme_override_constants/separation = 10
+
+[node name="ZoneLabel" type="Label" parent="ContentArea/TitleZONE"]
+text = "ZONE"
+theme_override_font_sizes/font_size = 72
+theme_override_colors/font_color = Color(0.88, 0.96, 0.90, 1.0)
+
+[node name="SixLabel" type="Label" parent="ContentArea/TitleZONE"]
+text = "6"
+theme_override_font_sizes/font_size = 72
+theme_override_colors/font_color = Color(0.18, 0.72, 0.38, 1.0)
+
+[node name="SubtitleLine" type="HBoxContainer" parent="ContentArea"]
+theme_override_constants/separation = 8
+
+[node name="SubAccent" type="ColorRect" parent="ContentArea/SubtitleLine"]
+custom_minimum_size = Vector2(3, 14)
+size_flags_vertical = 4
+color = Color(0.18, 0.72, 0.38, 0.8)
+mouse_filter = 2
+
+[node name="SubLabel" type="Label" parent="ContentArea/SubtitleLine"]
+text = "MULTIPLAYER TACTICAL COMBAT"
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.42, 0.58, 0.46, 0.85)
+
+[node name="DividerSpacer" type="Control" parent="ContentArea"]
+custom_minimum_size = Vector2(0, 28)
+
+[node name="Divider" type="ColorRect" parent="ContentArea"]
+custom_minimum_size = Vector2(360, 1)
+color = Color(0.18, 0.72, 0.38, 0.2)
+mouse_filter = 2
+
+[node name="FormSpacer" type="Control" parent="ContentArea"]
+custom_minimum_size = Vector2(0, 22)
+
+[node name="MainPanel" type="VBoxContainer" parent="ContentArea"]
+theme_override_constants/separation = 9
+
+[node name="CallSignLabel" type="Label" parent="ContentArea/MainPanel"]
+text = "CALL SIGN"
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.3, 0.42, 0.34, 0.7)
+
+[node name="NameInput" type="LineEdit" parent="ContentArea/MainPanel"]
+custom_minimum_size = Vector2(360, 42)
+placeholder_text = "Enter your name…"
+
+[node name="TeamSpacer" type="Control" parent="ContentArea/MainPanel"]
+custom_minimum_size = Vector2(0, 4)
+
+[node name="TeamLabel" type="Label" parent="ContentArea/MainPanel"]
+text = "SELECT TEAM"
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.3, 0.42, 0.34, 0.7)
+
+[node name="TeamRow" type="HBoxContainer" parent="ContentArea/MainPanel"]
+theme_override_constants/separation = 8
+
+[node name="TeamAlpha" type="Button" parent="ContentArea/MainPanel/TeamRow"]
+custom_minimum_size = Vector2(176, 38)
+text = "ALPHA  ·  BLUE"
+toggle_mode = true
+button_pressed = true
+
+[node name="TeamBravo" type="Button" parent="ContentArea/MainPanel/TeamRow"]
+custom_minimum_size = Vector2(176, 38)
+text = "BRAVO  ·  RED"
+toggle_mode = true
+
+[node name="ActionSpacer" type="Control" parent="ContentArea/MainPanel"]
+custom_minimum_size = Vector2(0, 10)
+
+[node name="HostBtn" type="Button" parent="ContentArea/MainPanel"]
+custom_minimum_size = Vector2(360, 52)
+text = "HOST GAME"
+
+[node name="JoinBtn" type="Button" parent="ContentArea/MainPanel"]
+custom_minimum_size = Vector2(360, 52)
+text = "JOIN GAME"
+
+[node name="QuitSpacer" type="Control" parent="ContentArea/MainPanel"]
+custom_minimum_size = Vector2(0, 6)
+
+[node name="QuitBtn" type="Button" parent="ContentArea/MainPanel"]
+custom_minimum_size = Vector2(360, 40)
+text = "QUIT"
+
+[node name="HostPanel" type="VBoxContainer" parent="ContentArea"]
+visible = false
+theme_override_constants/separation = 9
+
+[node name="PanelHeader" type="HBoxContainer" parent="ContentArea/HostPanel"]
+theme_override_constants/separation = 10
+
+[node name="HeaderAccent" type="ColorRect" parent="ContentArea/HostPanel/PanelHeader"]
+custom_minimum_size = Vector2(3, 18)
+size_flags_vertical = 4
+color = Color(0.18, 0.72, 0.38, 0.9)
+mouse_filter = 2
+
+[node name="HeaderLabel" type="Label" parent="ContentArea/HostPanel/PanelHeader"]
+text = "HOST SETTINGS"
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.18, 0.72, 0.38, 1.0)
+
+[node name="Sp1" type="Control" parent="ContentArea/HostPanel"]
+custom_minimum_size = Vector2(0, 14)
+
+[node name="PortLabel" type="Label" parent="ContentArea/HostPanel"]
+text = "PORT"
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.3, 0.42, 0.34, 0.7)
+
+[node name="PortSpin" type="SpinBox" parent="ContentArea/HostPanel"]
+custom_minimum_size = Vector2(360, 40)
+min_value = 1024.0
+max_value = 65535.0
+value = 7777.0
+suffix = ""
+
+[node name="Sp2" type="Control" parent="ContentArea/HostPanel"]
+custom_minimum_size = Vector2(0, 8)
+
+[node name="ConfirmBtn" type="Button" parent="ContentArea/HostPanel"]
+custom_minimum_size = Vector2(360, 52)
+text = "START SERVER"
+
+[node name="BackBtn" type="Button" parent="ContentArea/HostPanel"]
+custom_minimum_size = Vector2(360, 38)
+text = "BACK"
+
+[node name="JoinPanel" type="VBoxContainer" parent="ContentArea"]
+visible = false
+theme_override_constants/separation = 9
+
+[node name="PanelHeader" type="HBoxContainer" parent="ContentArea/JoinPanel"]
+theme_override_constants/separation = 10
+
+[node name="HeaderAccent" type="ColorRect" parent="ContentArea/JoinPanel/PanelHeader"]
+custom_minimum_size = Vector2(3, 18)
+size_flags_vertical = 4
+color = Color(0.18, 0.72, 0.38, 0.9)
+mouse_filter = 2
+
+[node name="HeaderLabel" type="Label" parent="ContentArea/JoinPanel/PanelHeader"]
+text = "JOIN SERVER"
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.18, 0.72, 0.38, 1.0)
+
+[node name="Sp1" type="Control" parent="ContentArea/JoinPanel"]
+custom_minimum_size = Vector2(0, 14)
+
+[node name="AddrLabel" type="Label" parent="ContentArea/JoinPanel"]
+text = "SERVER ADDRESS"
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.3, 0.42, 0.34, 0.7)
+
+[node name="AddressInput" type="LineEdit" parent="ContentArea/JoinPanel"]
+custom_minimum_size = Vector2(360, 42)
+text = "127.0.0.1"
+placeholder_text = "127.0.0.1"
+
+[node name="PortLabel" type="Label" parent="ContentArea/JoinPanel"]
+text = "PORT"
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.3, 0.42, 0.34, 0.7)
+
+[node name="PortSpin" type="SpinBox" parent="ContentArea/JoinPanel"]
+custom_minimum_size = Vector2(360, 40)
+min_value = 1024.0
+max_value = 65535.0
+value = 7777.0
+
+[node name="Sp2" type="Control" parent="ContentArea/JoinPanel"]
+custom_minimum_size = Vector2(0, 8)
+
+[node name="ConnectBtn" type="Button" parent="ContentArea/JoinPanel"]
+custom_minimum_size = Vector2(360, 52)
+text = "CONNECT"
+
+[node name="BackBtn" type="Button" parent="ContentArea/JoinPanel"]
+custom_minimum_size = Vector2(360, 38)
+text = "BACK"
+
+[node name="SettingsPanel" type="VBoxContainer" parent="ContentArea"]
+visible = false
+
+[node name="StatusLabel" type="Label" parent="."]
+anchor_left   = 0.5
+anchor_right  = 1.0
+anchor_top    = 1.0
+anchor_bottom = 1.0
+offset_left   = 0.0
+offset_right  = -16.0
+offset_top    = -36.0
+offset_bottom = -10.0
+horizontal_alignment = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.65, 0.85, 0.45, 0.9)
+
+[node name="VersionLabel" type="Label" parent="."]
+anchor_left   = 0.0
+anchor_right  = 0.0
+anchor_top    = 1.0
+anchor_bottom = 1.0
+offset_left   = 48.0
+offset_right  = 220.0
+offset_top    = -30.0
+offset_bottom = -10.0
+text = "BUILD 0.1.0"
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.2, 0.28, 0.22, 0.45)

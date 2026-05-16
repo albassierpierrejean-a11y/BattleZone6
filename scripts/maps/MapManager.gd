@@ -65,29 +65,19 @@ func _setup_visuals() -> void:
 			52.0)
 	_add_capture_paving()
 
-	_add_pbr_mesh("Buildings/Building1", Vector3(8, 6, 8),
-		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_Color.png",
-		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_NormalGL.png",
-		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_Roughness.png",
-		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_AmbientOcclusion.png", 4.0)
-	_add_pbr_mesh("Buildings/Building2", Vector3(8, 6, 8),
-		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_Color.png",
-		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_NormalGL.png",
-		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_Roughness.png",
-		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_AmbientOcclusion.png", 4.0)
-	_add_pbr_mesh("Buildings/Wall1", Vector3(10, 4, 1),
-		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_Color.png",
-		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_NormalGL.png",
-		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_Roughness.png",
-		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_AmbientOcclusion.png", 3.0)
-	_add_pbr_mesh("Buildings/Wall2", Vector3(10, 4, 1),
-		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_Color.png",
-		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_NormalGL.png",
-		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_Roughness.png",
-		"res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_AmbientOcclusion.png", 3.0)
+	const ROCK_C := "res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_Color.png"
+	const ROCK_N := "res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_NormalGL.png"
+	const ROCK_R := "res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_Roughness.png"
+	const ROCK_A := "res://assets/textures/Rock064_2K-PNG/Rock064_2K-PNG_AmbientOcclusion.png"
+	for bpath in ["Buildings/Building1", "Buildings/Building2"]:
+		_add_pbr_mesh(bpath, Vector3(8, 6, 8), ROCK_C, ROCK_N, ROCK_R, ROCK_A, 4.0)
+		_add_building_details(bpath, Vector3(8, 6, 8))
+	_add_pbr_mesh("Buildings/Wall1", Vector3(10, 4, 1), ROCK_C, ROCK_N, ROCK_R, ROCK_A, 3.0)
+	_add_pbr_mesh("Buildings/Wall2", Vector3(10, 4, 1), ROCK_C, ROCK_N, ROCK_R, ROCK_A, 3.0)
 
 # ─── Props 3D : barils, caisses, sacs de sable, pickups ──────────────────────
 func _spawn_map_props() -> void:
+	_spawn_terrain_elevation()
 	_spawn_terrain_features()
 	_spawn_barrels()
 	_spawn_crates()
@@ -192,6 +182,87 @@ func _make_tree(pos: Vector3, height: float, rng: RandomNumberGenerator) -> Node
 	sb.add_child(col)
 	root.add_child(sb)
 	return root
+
+func _spawn_terrain_elevation() -> void:
+	var dirt_mat := _make_pbr_material(
+		"res://assets/textures/Ground080_4K-JPG/Ground080_4K-JPG_Color.jpg",
+		"res://assets/textures/Ground080_4K-JPG/Ground080_4K-JPG_NormalGL.jpg",
+		"res://assets/textures/Ground080_4K-JPG/Ground080_4K-JPG_Roughness.jpg",
+		"res://assets/textures/Ground080_4K-JPG/Ground080_4K-JPG_AmbientOcclusion.jpg", 6.0)
+	# Bermes tactiques entre les zones
+	var berms: Array = [
+		[Vector3(-15, 0, 0),  Vector3(8.0, 1.6, 4.0)],
+		[Vector3( 15, 0, 0),  Vector3(8.0, 1.6, 4.0)],
+		[Vector3(  0, 0, 12), Vector3(4.0, 1.2, 7.0)],
+		[Vector3(  0, 0,-12), Vector3(4.0, 1.2, 7.0)],
+		[Vector3(-30, 0, 0),  Vector3(5.0, 2.0, 3.5)],
+		[Vector3( 30, 0, 0),  Vector3(5.0, 2.0, 3.5)],
+	]
+	for i in berms.size():
+		var pos: Vector3  = berms[i][0]
+		var sz: Vector3   = berms[i][1]
+		var sb  := StaticBody3D.new()
+		sb.position = pos + Vector3(0, sz.y * 0.5, 0)
+		sb.name = "Berm_%d" % i
+		var mi  := MeshInstance3D.new()
+		var bm  := BoxMesh.new()
+		bm.size = sz
+		mi.mesh = bm
+		mi.material_override = dirt_mat
+		sb.add_child(mi)
+		var col := CollisionShape3D.new()
+		var cs  := BoxShape3D.new()
+		cs.size = sz
+		col.shape = cs
+		sb.add_child(col)
+		add_child(sb)
+
+func _add_building_details(path: String, size: Vector3) -> void:
+	var parent := get_node_or_null(path)
+	if not parent:
+		return
+	var roof_mat := StandardMaterial3D.new()
+	roof_mat.albedo_color = Color(0.12, 0.12, 0.14)
+	roof_mat.metallic     = 0.40
+	roof_mat.roughness    = 0.55
+
+	# Corniche de toit
+	var ledge := MeshInstance3D.new()
+	var lb    := BoxMesh.new()
+	lb.size   = Vector3(size.x + 0.35, 0.22, size.z + 0.35)
+	ledge.mesh = lb
+	ledge.position = Vector3(0, size.y * 0.5 + 0.11, 0)
+	ledge.material_override = roof_mat
+	parent.add_child(ledge)
+
+	# Toit (légèrement en retrait)
+	var roof := MeshInstance3D.new()
+	var rb   := BoxMesh.new()
+	rb.size  = Vector3(size.x - 0.05, 0.12, size.z - 0.05)
+	roof.mesh = rb
+	roof.position = Vector3(0, size.y * 0.5 + 0.28, 0)
+	roof.material_override = roof_mat
+	parent.add_child(roof)
+
+	# Cadres de fenêtres (4 faces)
+	var win_mat := StandardMaterial3D.new()
+	win_mat.albedo_color = Color(0.07, 0.10, 0.16)
+	win_mat.metallic     = 0.05
+	win_mat.roughness    = 0.15
+	var offsets := [
+		[Vector3(0, 1.2, size.z * 0.5 + 0.02), Vector3(1.4, 0.8, 0.08)],
+		[Vector3(0, 1.2, -size.z * 0.5 - 0.02), Vector3(1.4, 0.8, 0.08)],
+		[Vector3(size.x * 0.5 + 0.02, 1.2, 0), Vector3(0.08, 0.8, 1.4)],
+		[Vector3(-size.x * 0.5 - 0.02, 1.2, 0), Vector3(0.08, 0.8, 1.4)],
+	]
+	for od in offsets:
+		var wf    := MeshInstance3D.new()
+		var wfb   := BoxMesh.new()
+		wfb.size   = od[1] as Vector3
+		wf.mesh    = wfb
+		wf.position = od[0] as Vector3
+		wf.material_override = win_mat
+		parent.add_child(wf)
 
 func _add_capture_paving() -> void:
 	var pave_mat := _make_pbr_material(

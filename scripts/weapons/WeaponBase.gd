@@ -230,6 +230,7 @@ func _spawn_hit_effect(pos: Vector3, normal: Vector3, target: Object) -> void:
 
 func _spawn_impact_effect(pos: Vector3, normal: Vector3) -> void:
 	var root := get_tree().current_scene
+	# Étincelles
 	var sparks := CPUParticles3D.new()
 	root.add_child(sparks)
 	sparks.global_position      = pos + normal * 0.01
@@ -249,6 +250,26 @@ func _spawn_impact_effect(pos: Vector3, normal: Vector3) -> void:
 	sparks.emitting = true
 	get_tree().create_timer(1.5).timeout.connect(
 		func(): if is_instance_valid(sparks): sparks.queue_free())
+	# Puff de poussière si impact sur le sol (normale vers le haut)
+	if normal.y > 0.5:
+		var dust := CPUParticles3D.new()
+		root.add_child(dust)
+		dust.global_position      = pos + Vector3(0, 0.02, 0)
+		dust.one_shot             = true
+		dust.explosiveness        = 0.7
+		dust.amount               = 7
+		dust.lifetime             = 0.55
+		dust.initial_velocity_min = 0.8
+		dust.initial_velocity_max = 2.5
+		dust.spread               = 55.0
+		dust.gravity              = Vector3(0.0, -2.0, 0.0)
+		dust.scale_amount_min     = 0.06
+		dust.scale_amount_max     = 0.18
+		dust.color                = Color(0.62, 0.52, 0.38, 0.75)
+		dust.emitting             = true
+		get_tree().create_timer(2.0).timeout.connect(
+			func(): if is_instance_valid(dust): dust.queue_free())
+	# Décal de trou de balle
 	var decal := Decal.new()
 	root.add_child(decal)
 	decal.global_position = pos + normal * 0.005

@@ -10,8 +10,45 @@ var _owner_id: int = 1
 var _exploded: bool = false
 
 func _ready() -> void:
+	_build_visual()
 	await get_tree().create_timer(fuse_time).timeout
 	explode()
+
+func _build_visual() -> void:
+	# Corps cylindrique de la grenade
+	var mi  := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius    = 0.038
+	cyl.bottom_radius = 0.042
+	cyl.height        = 0.11
+	mi.mesh = cyl
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.12, 0.18, 0.10)
+	mat.metallic     = 0.45
+	mat.roughness    = 0.6
+	mi.material_override = mat
+	add_child(mi)
+	# Anneau de sécurité
+	var ring_mi  := MeshInstance3D.new()
+	var ring_cyl := CylinderMesh.new()
+	ring_cyl.top_radius    = 0.048
+	ring_cyl.bottom_radius = 0.048
+	ring_cyl.height        = 0.008
+	ring_mi.mesh = ring_cyl
+	ring_mi.position = Vector3(0, 0.04, 0)
+	var ring_mat := StandardMaterial3D.new()
+	ring_mat.albedo_color = Color(0.65, 0.55, 0.30)
+	ring_mat.metallic     = 0.85
+	ring_mat.roughness    = 0.25
+	ring_mi.material_override = ring_mat
+	add_child(ring_mi)
+	# Collision
+	var col := CollisionShape3D.new()
+	var csh := CylinderShape3D.new()
+	csh.radius = 0.045
+	csh.height = 0.12
+	col.shape  = csh
+	add_child(col)
 
 func throw_from(origin: Vector3, direction: Vector3, owner_id: int) -> void:
 	_owner_id = owner_id

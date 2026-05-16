@@ -178,6 +178,7 @@ func _cast_bullet(origin: Vector3, dir: Vector3) -> void:
 		collider.take_damage(dmg, shooter_id)
 		if collider.is_in_group("players"):
 			hit_confirmed.emit(is_head)
+			_spawn_damage_number(hit_pos + Vector3.UP * 0.5, dmg, is_head)
 	if collider.has_method("apply_damage"):
 		collider.apply_damage(dmg, hit_pos)
 	_spawn_hit_effect(hit_pos, hit_normal, collider)
@@ -411,6 +412,28 @@ func _build_effects() -> void:
 	flash.emitting     = false
 	muzzle.add_child(flash)
 	muzzle_flash = flash
+
+func _spawn_damage_number(pos: Vector3, amount: float, is_headshot: bool) -> void:
+	var root := get_tree().current_scene
+	if not root:
+		return
+	var label := Label3D.new()
+	label.text        = "-%d" % int(amount)
+	label.font_size   = 48
+	label.billboard   = BaseMaterial3D.BILLBOARD_ENABLED
+	label.no_depth_test = true
+	if is_headshot:
+		label.modulate  = Color(1.0, 0.18, 0.08)
+		label.text      = "-%d  HS" % int(amount)
+		label.font_size = 58
+	else:
+		label.modulate  = Color(1.0, 0.92, 0.22)
+	root.add_child(label)
+	label.global_position = pos + Vector3(randf_range(-0.2, 0.2), 0, randf_range(-0.2, 0.2))
+	var tween := create_tween()
+	tween.tween_property(label, "global_position", pos + Vector3.UP * 2.0, 0.7)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.65)
+	tween.tween_callback(label.queue_free)
 
 func _spawn_bullet_trace(from: Vector3, to: Vector3) -> void:
 	var root := get_tree().current_scene

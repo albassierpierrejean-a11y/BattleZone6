@@ -530,7 +530,16 @@ func _fade_in_from_black() -> void:
 	tween.tween_callback(fade.queue_free)
 
 func _on_ammo_updated(current: int, reserve: int) -> void:
-	if ammo_current: ammo_current.text = str(current)
+	if ammo_current:
+		ammo_current.text = str(current)
+		var wm := _player.get_node_or_null("Head/Camera3D/WeaponManager") as WeaponManager if _player else null
+		var low := wm != null and wm.get_current_weapon() != null and current <= int(wm.get_current_weapon().mag_size * 0.25)
+		var col := Color(0.95, 0.18, 0.08, 1.0) if low else Color(0.92, 0.96, 0.93, 1.0)
+		ammo_current.add_theme_color_override("font_color", col)
+		if low:
+			var t := create_tween()
+			t.tween_property(ammo_current, "modulate:a", 0.3, 0.08)
+			t.tween_property(ammo_current, "modulate:a", 1.0, 0.08)
 	if ammo_reserve: ammo_reserve.text = "/ " + str(reserve)
 
 func _on_weapon_switched(_slot: int, weapon: WeaponBase) -> void:

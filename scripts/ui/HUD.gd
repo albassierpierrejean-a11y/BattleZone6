@@ -271,21 +271,38 @@ func _build_minimap_panel() -> void:
 	border_panel.add_theme_stylebox_override("panel", border_sbox)
 	border_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	minimap.add_child(border_panel)
-	# Dot joueur local (toujours au centre)
+	# Dot joueur local (toujours au centre) + flèche de direction
 	var pdot := ColorRect.new()
 	pdot.name          = "PlayerDot"
-	pdot.size          = Vector2(7, 7)
+	pdot.size          = Vector2(8, 8)
 	pdot.color         = Color(0.18, 0.92, 0.38)
 	pdot.anchor_left   = 0.5
 	pdot.anchor_top    = 0.5
 	pdot.anchor_right  = 0.5
 	pdot.anchor_bottom = 0.5
-	pdot.offset_left   = -3
-	pdot.offset_top    = -3
+	pdot.offset_left   = -4
+	pdot.offset_top    = -4
 	pdot.offset_right  =  4
 	pdot.offset_bottom =  4
 	pdot.mouse_filter  = Control.MOUSE_FILTER_IGNORE
 	minimap.add_child(pdot)
+
+	# Aiguille de direction (fine ligne pivotante)
+	var needle := ColorRect.new()
+	needle.name         = "PlayerNeedle"
+	needle.size         = Vector2(2, 10)
+	needle.color        = Color(0.18, 0.92, 0.38, 0.92)
+	needle.anchor_left  = 0.5
+	needle.anchor_top   = 0.5
+	needle.anchor_right = 0.5
+	needle.anchor_bottom = 0.5
+	needle.offset_left  = -1
+	needle.offset_top   = -14
+	needle.offset_right =  1
+	needle.offset_bottom = -4
+	needle.pivot_offset = Vector2(1, 10)
+	needle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	minimap.add_child(needle)
 	_minimap_root = minimap
 
 func _setup_minimap_flags() -> void:
@@ -331,7 +348,7 @@ func _update_minimap() -> void:
 		return
 	var mm_size  := _minimap_root.size
 	var center   := mm_size * 0.5
-	const SCALE  := 0.70   # pixels par unité monde (vue ~200 unités autour du joueur)
+	const SCALE  := 0.70   # pixels par unité monde
 	var pp       := _player.global_position
 	var flags    := get_tree().get_nodes_in_group("capture_points")
 	for i in mini(flags.size(), _flag_icon_nodes.size()):
@@ -340,6 +357,10 @@ func _update_minimap() -> void:
 		dot.position = center + Vector2((fp.x - pp.x) * SCALE, (fp.z - pp.z) * SCALE) - Vector2(4, 4)
 		if "owner_team" in flags[i]:
 			dot.color = _team_color(flags[i].owner_team)
+	# Aiguille de direction du joueur
+	var needle := _minimap_root.get_node_or_null("PlayerNeedle") as ColorRect
+	if needle:
+		needle.rotation = _player.rotation.y
 
 func _update_flag_hud() -> void:
 	var flags := get_tree().get_nodes_in_group("capture_points")

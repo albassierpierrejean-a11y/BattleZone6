@@ -1,5 +1,7 @@
 extends VehicleBase
 
+var _wheels: Array[MeshInstance3D] = []
+
 func _ready() -> void:
 	vehicle_name    = "Jeep"
 	max_speed       = 28.0
@@ -95,6 +97,7 @@ func _build_mesh() -> void:
 		tire.rotation.z = PI * 0.5
 		tire.material_override = tire_mat
 		add_child(tire)
+		_wheels.append(tire)
 		var rim := MeshInstance3D.new()
 		var rcyl := CylinderMesh.new()
 		rcyl.top_radius    = 0.20
@@ -105,3 +108,10 @@ func _build_mesh() -> void:
 		rim.rotation.z = PI * 0.5
 		rim.material_override = rim_mat
 		add_child(rim)
+
+func _physics_process(delta: float) -> void:
+	super._physics_process(delta)
+	var spd := linear_velocity.length()
+	var fwd_sign := signf(linear_velocity.dot(-global_transform.basis.z))
+	for wheel in _wheels:
+		wheel.rotate_object_local(Vector3.UP, spd * delta * fwd_sign * (1.0 / 0.38))

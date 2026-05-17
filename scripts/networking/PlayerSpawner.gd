@@ -39,6 +39,10 @@ func spawn_player(peer_id: int) -> Node:
 	player.set_multiplayer_authority(peer_id)
 	var parent := spawn_parent if spawn_parent else get_tree().current_scene
 	parent.add_child(player)
+	var pc := player as PlayerController
+	if pc:
+		pc.team        = data.team
+		pc.player_name = data.name
 	var spawn_pos := GameManager.get_spawn_position(data.team)
 	player.global_position = spawn_pos
 	_spawned_players[peer_id] = player

@@ -299,6 +299,7 @@ func _try_enter_vehicle(vehicle: Node) -> void:
 		current_vehicle = vehicle
 		set_collision_layer_value(1, false)
 		visible = false
+		_rpc_set_visible.rpc(false)
 		entered_vehicle.emit(vehicle)
 
 func exit_vehicle() -> void:
@@ -312,7 +313,13 @@ func exit_vehicle() -> void:
 	global_position = exit_pos
 	set_collision_layer_value(1, true)
 	visible = true
+	_rpc_set_visible.rpc(true)
 	exited_vehicle.emit()
+
+@rpc("any_peer", "reliable")
+func _rpc_set_visible(v: bool) -> void:
+	if not is_multiplayer_authority():
+		visible = v
 
 # ─── Combat ──────────────────────────────────────────────────────────────────
 func take_damage(amount: float, source_id: int) -> void:

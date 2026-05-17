@@ -1,4 +1,4 @@
-extends MapManager
+extends "res://scripts/maps/MapManager.gd"
 class_name OasisManager
 
 # ─── Texture paths ────────────────────────────────────────────────────────────

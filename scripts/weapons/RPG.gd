@@ -1,4 +1,4 @@
-extends WeaponBase
+extends "res://scripts/weapons/WeaponBase.gd"
 
 @export var explosion_radius: float = 6.0
 @export var explosion_damage: float = 180.0

@@ -1,5 +1,6 @@
 extends Node
 class_name PlayerSpawner
+const PlayerController = preload("res://scripts/player/PlayerController.gd")
 
 @export var player_scene: PackedScene
 @export var spawn_parent: Node3D

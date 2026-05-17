@@ -1,5 +1,6 @@
 extends Node3D
 class_name WeaponManager
+const WeaponBase = preload("res://scripts/weapons/WeaponBase.gd")
 
 # ─── Constantes ──────────────────────────────────────────────────────────────
 const MAX_WEAPONS := 3

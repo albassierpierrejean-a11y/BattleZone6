@@ -64,8 +64,20 @@ func _ready() -> void:
 	_connect_signals()
 	name_input.text = "SOLDAAT_%d" % randi_range(100, 999)
 	player_name_lbl.text = name_input.text
+	_update_player_card()
 	_animate_intro()
 	_build_map_selector()
+
+func _update_player_card() -> void:
+	var pm := ProgressionManager
+	var rank_lbl := get_node_or_null("NavPanel/PlayerCard/PlayerRow/PlayerInfo/PlayerRank") as Label
+	if rank_lbl:
+		rank_lbl.text = "%s  ·  NV. %d" % [pm.get_rank_title(), pm.level]
+	var prog := pm.get_xp_progress()
+	xp_fill.anchor_right = clampf(prog, 0.0, 1.0)
+	var xp_prev := pm.get_xp_for_level(pm.level - 1) if pm.level > 1 else 0
+	var xp_next := pm.get_xp_for_level(pm.level)
+	xp_current_lbl.text = "%d XP" % (pm.xp - xp_prev)
 
 # ─── Intro animation ─────────────────────────────────────────────────────────
 func _animate_intro() -> void:
@@ -233,7 +245,7 @@ func _connect_signals() -> void:
 	nav_play.pressed.connect(func(): _open_panel(play_panel))
 	nav_operator.pressed.connect(_on_operator_pressed)
 	nav_progression.pressed.connect(_on_progression_pressed)
-	nav_settings.pressed.connect(func(): _open_panel(settings_panel))
+	nav_settings.pressed.connect(_on_settings_pressed)
 	nav_quit.pressed.connect(get_tree().quit)
 	play_back.pressed.connect(_hide_all_panels)
 	host_btn.pressed.connect(func(): _open_panel(host_panel))
@@ -274,8 +286,11 @@ func _open_panel(panel: VBoxContainer) -> void:
 func _on_operator_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/ui/LoadoutScreen.tscn")
 
+func _on_settings_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/ui/SettingsScreen.tscn")
+
 func _on_progression_pressed() -> void:
-	_set_status("Progression — bientôt disponible")
+	get_tree().change_scene_to_file("res://scenes/ui/ProgressionScreen.tscn")
 
 # ─── Network ─────────────────────────────────────────────────────────────────
 func _on_host_pressed() -> void:

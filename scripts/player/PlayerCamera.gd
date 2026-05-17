@@ -1,6 +1,8 @@
 extends Camera3D
 class_name PlayerCamera
 
+const PlayerController = preload("res://scripts/player/PlayerController.gd")
+
 # ─── Constantes ──────────────────────────────────────────────────────────────
 const FOV_DEFAULT     := 75.0
 const FOV_ADS         := 45.0
@@ -37,7 +39,7 @@ var _shake:         float   = 0.0
 var _is_aiming:     bool    = false
 
 var _player_cache:  PlayerController = null
-var _wm_cache:      WeaponManager    = null
+var _wm_cache:      Node             = null
 var _env_cache:     WorldEnvironment = null
 
 func _ready() -> void:
@@ -45,7 +47,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_player_cache = _get_player()
 	if _player_cache:
-		_wm_cache = _player_cache.get_node_or_null("Head/Camera3D/WeaponManager") as WeaponManager
+		_wm_cache = _player_cache.get_node_or_null("Head/Camera3D/WeaponManager")
 	_env_cache = get_tree().get_first_node_in_group("world_environment") as WorldEnvironment
 
 func _process(delta: float) -> void:
@@ -159,8 +161,9 @@ func is_aiming() -> bool:
 # ─── Utilitaire ──────────────────────────────────────────────────────────────
 func _update_dof(_delta: float, _player: PlayerController) -> void:
 	var wm := _wm_cache
-	var is_sniper := wm != null and wm.get_current_weapon() != null and wm.get_current_weapon().weapon_name == "SR-98"
-	var want_dof  := _is_aiming and is_sniper
+	var is_sniper: bool = wm != null and wm.has_method("get_current_weapon") \
+		and wm.get_current_weapon() != null and wm.get_current_weapon().weapon_name == "SR-98"
+	var want_dof: bool  = _is_aiming and is_sniper
 	if not _env_cache or not _env_cache.environment:
 		return
 	var e := _env_cache.environment

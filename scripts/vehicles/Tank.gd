@@ -1,4 +1,4 @@
-extends VehicleBase
+extends "res://scripts/vehicles/VehicleBase.gd"
 
 # ─── Constants ───────────────────────────────────────────────────────────────
 const TURRET_ROTATE_SPEED := 1.2

@@ -1,5 +1,7 @@
 extends Area3D
 class_name HealthPickup
+const PlayerController = preload("res://scripts/player/PlayerController.gd")
+const PlayerHealth     = preload("res://scripts/player/PlayerHealth.gd")
 
 @export var heal_amount: float = 40.0
 @export var respawn_delay: float = 15.0

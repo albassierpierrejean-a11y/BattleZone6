@@ -23,6 +23,7 @@ var kills:  int  = 0
 var deaths: int  = 0
 var wins:   int  = 0
 var games:  int  = 0
+var _session_kills: int = 0   # kills in current match only
 
 func _ready() -> void:
 	_load()
@@ -50,6 +51,7 @@ func add_xp(amount: int) -> void:
 
 func record_kill() -> void:
 	kills += 1
+	_session_kills += 1
 	add_xp(XP_PER_KILL)
 
 func record_objective() -> void:
@@ -58,16 +60,14 @@ func record_objective() -> void:
 func record_match_end(won: bool) -> Dictionary:
 	games += 1
 	var breakdown := {}
+	var kill_xp := _session_kills * XP_PER_KILL
+	if kill_xp > 0:
+		breakdown["Éliminations (%d)" % _session_kills] = kill_xp
 	if won:
 		wins += 1
 		breakdown["Victoire d'équipe"] = XP_WIN_BONUS
-	var kill_xp := kills * XP_PER_KILL
-	if kill_xp > 0:
-		breakdown["Éliminations (%d)" % kills] = kill_xp
-	var total := 0
-	for v in breakdown.values():
-		total += v
-	add_xp(total)
+		add_xp(XP_WIN_BONUS)   # only win bonus — kill XP already added in real-time
+	_session_kills = 0
 	_save()
 	return breakdown
 

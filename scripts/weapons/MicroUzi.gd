@@ -1,4 +1,4 @@
-extends WeaponBase
+extends "res://scripts/weapons/WeaponBase.gd"
 
 func _ready() -> void:
 	weapon_name      = "Micro UZI"

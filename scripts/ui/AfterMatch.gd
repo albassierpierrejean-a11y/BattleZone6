@@ -12,14 +12,16 @@ var _root: Control
 var _xp_bar_bg: ColorRect
 var _xp_bar_prev: ColorRect
 var _xp_bar_gain: ColorRect
+var _prev_xp_pct: float = 0.0
 
 func _ready() -> void:
 	layer   = 10
 	visible = false
 
 func show_result(won: bool, map_name: String, mode_name: String,
-		breakdown: Dictionary, prev_xp_pct: float, new_xp_pct: bool) -> void:
+		breakdown: Dictionary, prev_xp_pct: float = 0.0) -> void:
 	visible = true
+	_prev_xp_pct = prev_xp_pct
 	_build_ui(won, map_name, mode_name, breakdown)
 
 func _build_ui(won: bool, map_name: String, mode_name: String, breakdown: Dictionary) -> void:
@@ -136,8 +138,6 @@ func _build_ui(won: bool, map_name: String, mode_name: String, breakdown: Dictio
 		_animate_xp_bar()
 
 func _make_level_block(pm: Node) -> Control:
-	var box := VBoxContainer.new()
-	box.theme_override_constants__separation = 3
 	var s := StyleBoxFlat.new()
 	s.bg_color = Color(C_ACCENT, 0.06)
 	s.border_width_left   = 1; s.border_width_right  = 1
@@ -145,12 +145,12 @@ func _make_level_block(pm: Node) -> Control:
 	s.border_color = Color(C_ACCENT, 0.35)
 	s.content_margin_left   = 24.0; s.content_margin_right  = 24.0
 	s.content_margin_top    = 14.0; s.content_margin_bottom = 14.0
-	var inner := Panel.new()
+	var inner := PanelContainer.new()
 	inner.custom_minimum_size = Vector2(480, 0)
 	inner.add_theme_stylebox_override("panel", s)
 	var inner_col := VBoxContainer.new()
-	inner_col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	inner_col.theme_override_constants__separation = 3
+	inner_col.add_theme_constant_override("separation", 3)
+	inner_col.alignment = BoxContainer.ALIGNMENT_CENTER
 	var lbl_tag := Label.new()
 	lbl_tag.text = "NIVEAU ATTEINT"
 	lbl_tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -170,30 +170,30 @@ func _make_level_block(pm: Node) -> Control:
 	lbl_rank.add_theme_color_override("font_color", C_WHITE)
 	inner_col.add_child(lbl_rank)
 	inner.add_child(inner_col)
-	box.add_child(inner)
-	return box
+	return inner
 
-func _make_xp_row(label: String, value: String, total: bool) -> HBoxContainer:
+func _make_xp_row(label: String, value: String, total: bool) -> Control:
+	var wrap := VBoxContainer.new()
+	wrap.custom_minimum_size = Vector2(480, 0)
+	wrap.add_theme_constant_override("separation", 0)
+	if total:
+		var pad_top := Control.new()
+		pad_top.custom_minimum_size = Vector2(0, 10)
+		wrap.add_child(pad_top)
 	var row := HBoxContainer.new()
-	row.custom_minimum_size = Vector2(480, 0)
+	wrap.add_child(row)
 	var lbl := Label.new()
 	lbl.text = label
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	lbl.add_theme_font_size_override("font_size", 13 if not total else 11)
-	lbl.add_theme_color_override("font_color", C_WHITE if not total else C_WHITE)
+	lbl.add_theme_font_size_override("font_size", 11 if total else 13)
+	lbl.add_theme_color_override("font_color", C_WHITE)
 	var val := Label.new()
 	val.text = value
 	val.add_theme_font_size_override("font_size", 18 if total else 13)
 	val.add_theme_color_override("font_color", C_ACCENT)
 	row.add_child(lbl)
 	row.add_child(val)
-	if total:
-		var s := StyleBoxFlat.new()
-		s.border_width_top = 1
-		s.border_color = Color(C_ACCENT, 0.2)
-		s.content_margin_top    = 10.0
-		s.content_margin_bottom = 10.0
-	return row
+	return wrap
 
 func _make_divider() -> ColorRect:
 	var d := ColorRect.new()
@@ -205,7 +205,7 @@ func _make_divider() -> ColorRect:
 func _make_xp_bar(pm: Node) -> VBoxContainer:
 	var wrap := VBoxContainer.new()
 	wrap.custom_minimum_size = Vector2(480, 0)
-	wrap.theme_override_constants__separation = 4
+	wrap.add_theme_constant_override("separation", 4)
 	var labels := HBoxContainer.new()
 	var l1 := Label.new()
 	l1.text = "NIV. %d" % (pm.level - 1)
@@ -243,7 +243,7 @@ func _animate_xp_bar() -> void:
 	if not pm: return
 	await get_tree().create_timer(0.5).timeout
 	var track_w := 480.0
-	var prev_pct := maxf(0.0, pm.get_xp_progress() - 0.25)
+	var prev_pct := clampf(_prev_xp_pct, 0.0, 1.0)
 	var gain_pct: float = pm.get_xp_progress()
 	_xp_bar_prev.size = Vector2(0.0, 6.0)
 	_xp_bar_gain.size = Vector2(0.0, 6.0)

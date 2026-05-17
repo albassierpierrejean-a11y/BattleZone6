@@ -1,4 +1,4 @@
-extends GameModeBase
+extends "res://scripts/game_modes/GameModeBase.gd"
 class_name ConquestMode
 
 # ─── Constantes ──────────────────────────────────────────────────────────────

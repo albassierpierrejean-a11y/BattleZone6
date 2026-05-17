@@ -1,6 +1,9 @@
 extends Node3D
 class_name WeaponBase
 
+const PlayerController = preload("res://scripts/player/PlayerController.gd")
+const SuppressSystem   = preload("res://scripts/player/SuppressSystem.gd")
+
 # ─── Énumérations ────────────────────────────────────────────────────────────
 enum FireMode { SEMI, AUTO, BURST }
 
@@ -310,7 +313,7 @@ func _spawn_impact_effect(pos: Vector3, normal: Vector3) -> void:
 	var hole_mat := StandardMaterial3D.new()
 	hole_mat.albedo_color      = Color(0.04, 0.03, 0.02, 0.92)
 	hole_mat.transparency      = BaseMaterial3D.TRANSPARENCY_ALPHA
-	hole_mat.depth_draw_mode   = BaseMaterial3D.DEPTH_DRAW_NEVER
+	hole_mat.depth_draw_mode   = BaseMaterial3D.DEPTH_DRAW_DISABLED
 	hole_mat.shading_mode      = BaseMaterial3D.SHADING_MODE_UNSHADED
 	hole_mat.cull_mode         = BaseMaterial3D.CULL_DISABLED
 	hole_mat.render_priority   = 1

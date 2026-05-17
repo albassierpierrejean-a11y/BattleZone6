@@ -1,6 +1,11 @@
 extends CanvasLayer
 class_name HUD
 
+const PlayerController = preload("res://scripts/player/PlayerController.gd")
+const WeaponBase       = preload("res://scripts/weapons/WeaponBase.gd")
+const WeaponManager    = preload("res://scripts/weapons/WeaponManager.gd")
+const SuppressSystem   = preload("res://scripts/player/SuppressSystem.gd")
+
 # ─── Node refs ───────────────────────────────────────────────────────────────
 @onready var health_bar: ProgressBar     = $Bottom/HealthBar
 @onready var armor_bar: ProgressBar      = $Bottom/ArmorBar
@@ -592,7 +597,7 @@ func _show_spawn_selection() -> void:
 	panel.offset_bottom = -80.0
 	panel.offset_left   = -160.0
 	panel.offset_right  = 160.0
-	panel.theme_override_constants/separation = 8
+	panel.add_theme_constant_override("separation", 8)
 
 	var lbl := Label.new()
 	lbl.text = "CHOISIR ZONE DE SPAWN"

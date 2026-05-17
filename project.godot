@@ -27,6 +27,7 @@ AudioManager="*res://scripts/autoloads/AudioManager.gd"
 GraphicsManager="*res://scripts/autoloads/GraphicsManager.gd"
 ProgressionManager="*res://scripts/autoloads/ProgressionManager.gd"
 LoadoutManager="*res://scripts/autoloads/LoadoutManager.gd"
+SettingsManager="*res://scripts/autoloads/SettingsManager.gd"
 
 [display]
 

@@ -1,4 +1,5 @@
-extends WeaponBase
+extends "res://scripts/weapons/WeaponBase.gd"
+const PlayerController = preload("res://scripts/player/PlayerController.gd")
 
 const PELLETS := 8
 

@@ -1,6 +1,13 @@
 extends Node
 class_name MapManager
 
+const GameModeBase    = preload("res://scripts/game_modes/GameModeBase.gd")
+const LagCompensation = preload("res://scripts/networking/LagCompensation.gd")
+const HUD             = preload("res://scripts/ui/HUD.gd")
+const PlayerController = preload("res://scripts/player/PlayerController.gd")
+const ConquestMode    = preload("res://scripts/game_modes/Conquest.gd")
+const AfterMatch      = preload("res://scripts/ui/AfterMatch.gd")
+
 @export var game_mode_scene: PackedScene
 @export var hud_scene: PackedScene
 @export var player_scene: PackedScene

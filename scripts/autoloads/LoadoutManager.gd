@@ -2,8 +2,12 @@ extends Node
 
 signal loadout_changed
 
-const SAVE_PATH := "user://loadout.cfg"
-const WeaponData = preload("res://scripts/resources/WeaponData.gd")
+const SAVE_PATH     := "user://loadout.cfg"
+const OperatorData  = preload("res://scripts/resources/OperatorData.gd")
+const ItemData      = preload("res://scripts/resources/ItemData.gd")
+const AccessoryData = preload("res://scripts/resources/AccessoryData.gd")
+const WeaponData    = preload("res://scripts/resources/WeaponData.gd")
+const WeaponBase    = preload("res://scripts/weapons/WeaponBase.gd")
 
 # ─── Registres ────────────────────────────────────────────────────────────────
 var operators:   Dictionary = {}   # id -> OperatorData

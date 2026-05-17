@@ -1,6 +1,8 @@
 extends Node
 class_name SuppressSystem
 
+const PlayerCamera = preload("res://scripts/player/PlayerCamera.gd")
+
 # IS-style suppression : balles proches → désaturation + tremblement + ADS pénalisé
 
 const SUPPRESS_RADIUS    := 4.5

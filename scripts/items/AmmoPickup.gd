@@ -1,5 +1,7 @@
 extends Area3D
 class_name AmmoPickup
+const PlayerController = preload("res://scripts/player/PlayerController.gd")
+const WeaponManager    = preload("res://scripts/weapons/WeaponManager.gd")
 
 @export var ammo_per_weapon: int = 60
 @export var respawn_delay: float = 20.0

@@ -1,6 +1,8 @@
 extends CharacterBody3D
 class_name PlayerController
 
+const Grenade = preload("res://scripts/weapons/Grenade.gd")
+
 # ─── Constantes ──────────────────────────────────────────────────────────────
 const WALK_SPEED           := 5.0
 const SPRINT_SPEED         := 8.5

@@ -1,5 +1,6 @@
 extends Node3D
 class_name PlayerBody
+const PlayerController = preload("res://scripts/player/PlayerController.gd")
 
 enum SoldierClass { ASSAULT = 0, MEDIC = 1, SNIPER = 2, ENGINEER = 3, HEAVY = 4, RECON = 5 }
 const CLASS_COUNT := 6
@@ -245,12 +246,26 @@ func _build_name_tag(player: PlayerController) -> void:
 # ─── Mesh helper ─────────────────────────────────────────────────────────────
 func _add(mesh: Mesh, pos: Vector3, color: Color, configure: Callable) -> void:
 	configure.call(mesh)
+	# Maximise polygon density on every primitive for ultra-high-poly appearance
+	if mesh is SphereMesh:
+		(mesh as SphereMesh).radial_segments = 128
+		(mesh as SphereMesh).rings           = 64
+	elif mesh is CapsuleMesh:
+		(mesh as CapsuleMesh).radial_segments = 64
+		(mesh as CapsuleMesh).rings           = 32
+	elif mesh is CylinderMesh:
+		(mesh as CylinderMesh).radial_segments = 64
+		(mesh as CylinderMesh).rings           = 16
+	elif mesh is BoxMesh:
+		(mesh as BoxMesh).subdivide_width  = 12
+		(mesh as BoxMesh).subdivide_height = 12
+		(mesh as BoxMesh).subdivide_depth  = 12
 	var mi := MeshInstance3D.new()
 	mi.mesh     = mesh
 	mi.position = pos
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = color
-	mat.roughness    = 0.88
-	mat.metallic     = 0.02
+	mat.roughness    = 0.82
+	mat.metallic     = 0.04
 	mi.material_override = mat
 	add_child(mi)

@@ -1,6 +1,11 @@
 extends CanvasLayer
 class_name LoadoutScreen
 
+const OperatorData  = preload("res://scripts/resources/OperatorData.gd")
+const ItemData      = preload("res://scripts/resources/ItemData.gd")
+const AccessoryData = preload("res://scripts/resources/AccessoryData.gd")
+const WeaponData    = preload("res://scripts/resources/WeaponData.gd")
+
 # ── Palette ──────────────────────────────────────────────────────────────────
 const C_BG     := Color(0.016, 0.020, 0.014, 0.97)
 const C_ACCENT := Color(0.831, 0.525, 0.102, 1.0)

@@ -1,4 +1,4 @@
-extends VehicleBase
+extends "res://scripts/vehicles/VehicleBase.gd"
 
 var _wheels: Array[MeshInstance3D] = []
 

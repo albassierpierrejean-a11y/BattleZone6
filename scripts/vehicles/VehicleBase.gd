@@ -115,7 +115,7 @@ func _build_track_resources() -> void:
 	_track_mat             = StandardMaterial3D.new()
 	_track_mat.albedo_color    = Color(0.09, 0.07, 0.05, 0.72)
 	_track_mat.transparency    = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_track_mat.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_NEVER
+	_track_mat.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
 	_track_mat.shading_mode    = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_track_mat.cull_mode       = BaseMaterial3D.CULL_DISABLED
 	_track_mat.render_priority = 1

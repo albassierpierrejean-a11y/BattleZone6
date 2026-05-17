@@ -229,7 +229,7 @@ func _spawn_tire_tracks(delta: float) -> void:
 	var hit := space.intersect_ray(ray)
 	if hit.is_empty():
 		return
-	var pos := hit["position"]
+	var pos: Vector3 = hit["position"]
 	var decal := Decal.new()
 	root.add_child(decal)
 	decal.global_position = pos + Vector3.UP * 0.01

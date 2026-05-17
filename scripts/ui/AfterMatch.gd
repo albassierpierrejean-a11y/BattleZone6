@@ -244,7 +244,7 @@ func _animate_xp_bar() -> void:
 	await get_tree().create_timer(0.5).timeout
 	var track_w := 480.0
 	var prev_pct := maxf(0.0, pm.get_xp_progress() - 0.25)
-	var gain_pct := pm.get_xp_progress()
+	var gain_pct: float = pm.get_xp_progress()
 	_xp_bar_prev.size = Vector2(0.0, 6.0)
 	_xp_bar_gain.size = Vector2(0.0, 6.0)
 	var tw := create_tween().set_parallel(true)

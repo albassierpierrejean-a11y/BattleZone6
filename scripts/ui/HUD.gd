@@ -657,7 +657,7 @@ func _update_vehicle_hud() -> void:
 	if v.has_method("get_speed_kmh"):
 		kmh = v.get_speed_kmh()
 	elif "linear_velocity" in v:
-		kmh = (v as Node3D).get("linear_velocity", Vector3.ZERO).length() * 3.6
+		kmh = ((v as Node3D).get("linear_velocity") as Vector3).length() * 3.6
 	speed_label.text = "%d km/h" % int(kmh)
 
 func _build_stamina_bar() -> void:

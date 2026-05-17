@@ -594,6 +594,15 @@ func _setup_client() -> void:
 		hud.link_player(player as PlayerController)
 	GameManager.current_game_mode = game_mode
 
+	# Écran de fin de match
+	const AFTER_MATCH_SCENE := "res://scenes/ui/AfterMatch.tscn"
+	if ResourceLoader.exists(AFTER_MATCH_SCENE):
+		var am_scene := load(AFTER_MATCH_SCENE) as PackedScene
+		if am_scene:
+			var am := am_scene.instantiate() as AfterMatch
+			hud_layer.add_child(am)
+			GameManager.match_ended.connect(am.show_result)
+
 func _find_local_player(peer_id: int) -> Node:
 	if spawner:
 		var p := spawner.get_player_node(peer_id)

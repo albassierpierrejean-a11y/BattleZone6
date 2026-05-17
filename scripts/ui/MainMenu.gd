@@ -272,7 +272,7 @@ func _open_panel(panel: VBoxContainer) -> void:
 
 # ─── Nav callbacks ────────────────────────────────────────────────────────────
 func _on_operator_pressed() -> void:
-	_set_status("Écran opérateur — bientôt disponible")
+	get_tree().change_scene_to_file("res://scenes/ui/LoadoutScreen.tscn")
 
 func _on_progression_pressed() -> void:
 	_set_status("Progression — bientôt disponible")

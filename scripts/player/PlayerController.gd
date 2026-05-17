@@ -63,6 +63,10 @@ var _is_sprinting:    bool  = false
 var stamina:          float = STAMINA_MAX
 var _stamina_delay:   float = 0.0
 
+var _item_lethal_cd:    float = 0.0
+var _item_tactical_cd:  float = 0.0
+var _throwing_item:     bool  = false
+
 func _ready() -> void:
 	peer_id = name.to_int() if name.is_valid_int() else 1
 	set_multiplayer_authority(peer_id)
@@ -101,6 +105,7 @@ func _physics_process(delta: float) -> void:
 	_smooth_head_height(delta)
 	_update_stamina(delta)
 	_handle_interactions()
+	_handle_item_input(delta)
 	_detect_landing()
 	move_and_slide()
 	_was_on_floor = is_on_floor()
@@ -321,6 +326,53 @@ func respawn(spawn_pos: Vector3) -> void:
 	visible  = true
 	_enter_stand()
 	health.reset()
+
+# ─── Items ───────────────────────────────────────────────────────────────────
+func _handle_item_input(delta: float) -> void:
+	_item_lethal_cd   = maxf(_item_lethal_cd   - delta, 0.0)
+	_item_tactical_cd = maxf(_item_tactical_cd - delta, 0.0)
+	if Input.is_action_just_pressed("grenade") and _item_lethal_cd <= 0.0 and not _throwing_item:
+		var it := LoadoutManager.get_lethal()
+		if it:
+			_throw_item(it.id)
+			_item_lethal_cd = maxf(it.cooldown if it.cooldown > 0.0 else 1.8, 1.8)
+	if Input.is_action_just_pressed("use_tactical") and _item_tactical_cd <= 0.0 and not _throwing_item:
+		var it := LoadoutManager.get_tactical()
+		if it:
+			_throw_item(it.id)
+			_item_tactical_cd = maxf(it.cooldown if it.cooldown > 0.0 else 1.8, 1.8)
+
+func _throw_item(item_id: String) -> void:
+	_throwing_item = true
+	# Animation : inclinaison de la tête vers le bas puis retour
+	var orig_x := head.rotation.x
+	var tw := create_tween()
+	tw.tween_property(head, "rotation:x", orig_x - 0.22, 0.18).set_ease(Tween.EASE_OUT)
+	tw.tween_property(head, "rotation:x", orig_x,        0.14).set_ease(Tween.EASE_IN)
+	await get_tree().create_timer(0.18).timeout
+	# Instancier la grenade
+	var grenade := Grenade.new()
+	get_tree().current_scene.add_child(grenade)
+	grenade.grenade_type = _item_id_to_grenade_type(item_id)
+	grenade._owner_id    = multiplayer.get_unique_id() if multiplayer.has_multiplayer_peer() else 1
+	var throw_origin := camera.global_position
+	var throw_dir    := (-camera.global_transform.basis.z + camera.global_transform.basis.y * 0.28).normalized()
+	grenade.global_position = throw_origin + throw_dir * 0.4
+	grenade.apply_central_impulse(throw_dir * grenade.throw_force)
+	grenade.apply_torque_impulse(Vector3(randf_range(-2, 2), randf_range(-2, 2), randf_range(-2, 2)) * 0.5)
+	await get_tree().create_timer(0.3).timeout
+	_throwing_item = false
+
+func _item_id_to_grenade_type(id: String) -> Grenade.Type:
+	match id:
+		"smoke_grenade":  return Grenade.Type.SMOKE
+		"flash_grenade":  return Grenade.Type.FLASH
+		"stun_grenade":   return Grenade.Type.STUN
+		"thermite":       return Grenade.Type.THERMITE
+		_:                return Grenade.Type.FRAG
+
+func apply_stun(_duration: float) -> void:
+	pass  # Hook pour effets stun futurs (brouillage visée, écran teinté)
 
 # ─── Accesseurs ──────────────────────────────────────────────────────────────
 func is_sprinting() -> bool:

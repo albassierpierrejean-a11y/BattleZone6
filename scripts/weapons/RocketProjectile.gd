@@ -110,7 +110,7 @@ func _explode(pos: Vector3) -> void:
 		if not collider or not (collider is Node3D):
 			continue
 		var dist    := (collider as Node3D).global_position.distance_to(pos)
-		var falloff := 1.0 - clamp(dist / _radius, 0.0, 1.0)
+		var falloff: float = 1.0 - clampf(dist / _radius, 0.0, 1.0)
 		if collider.has_method("take_damage"):
 			collider.take_damage(_damage * falloff, _owner_id)
 		if collider.has_method("apply_damage"):

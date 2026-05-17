@@ -43,7 +43,7 @@ func spawn_player(peer_id: int) -> Node:
 	if pc:
 		pc.team        = data.team
 		pc.player_name = data.name
-	var spawn_pos := GameManager.get_spawn_position(data.team)
+	var spawn_pos := GameManager.get_spawn_position(data.team, peer_id)
 	player.global_position = spawn_pos
 	_spawned_players[peer_id] = player
 	GameManager.player_spawned.emit(peer_id)

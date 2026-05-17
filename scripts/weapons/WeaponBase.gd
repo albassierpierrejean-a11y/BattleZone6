@@ -302,16 +302,26 @@ func _spawn_impact_effect(pos: Vector3, normal: Vector3) -> void:
 		dust.emitting             = true
 		get_tree().create_timer(2.0).timeout.connect(
 			func(): if is_instance_valid(dust): dust.queue_free())
-	# Décal de trou de balle
-	var decal := Decal.new()
-	root.add_child(decal)
-	decal.global_position = pos + normal * 0.005
+	# Trou de balle — flat mesh (Decal sans texture = invisible en Godot 4)
+	var hole := MeshInstance3D.new()
+	var hole_pm := PlaneMesh.new()
+	hole_pm.size = Vector2(0.055, 0.055)
+	hole.mesh = hole_pm
+	var hole_mat := StandardMaterial3D.new()
+	hole_mat.albedo_color      = Color(0.04, 0.03, 0.02, 0.92)
+	hole_mat.transparency      = BaseMaterial3D.TRANSPARENCY_ALPHA
+	hole_mat.depth_draw_mode   = BaseMaterial3D.DEPTH_DRAW_NEVER
+	hole_mat.shading_mode      = BaseMaterial3D.SHADING_MODE_UNSHADED
+	hole_mat.cull_mode         = BaseMaterial3D.CULL_DISABLED
+	hole_mat.render_priority   = 1
+	hole.material_override     = hole_mat
+	hole.gi_mode               = GeometryInstance3D.GI_MODE_DISABLED
+	root.add_child(hole)
+	hole.global_position = pos + normal * 0.006
 	if normal.length_squared() > 0.01:
-		decal.look_at(pos - normal)
-	decal.size     = Vector3(0.05, 0.05, 0.08)
-	decal.modulate = Color(0.04, 0.04, 0.04, 0.88)
+		hole.look_at(pos + normal, Vector3.UP if abs(normal.dot(Vector3.UP)) < 0.99 else Vector3.FORWARD)
 	get_tree().create_timer(12.0).timeout.connect(
-		func(): if is_instance_valid(decal): decal.queue_free())
+		func(): if is_instance_valid(hole): hole.queue_free())
 
 func _spawn_blood_effect(pos: Vector3, normal: Vector3) -> void:
 	var root  := get_tree().current_scene

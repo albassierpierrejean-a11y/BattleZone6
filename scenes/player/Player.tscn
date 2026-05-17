@@ -14,7 +14,6 @@ auto_exposure_enabled             = true
 auto_exposure_min_sensitivity     = 25.0
 auto_exposure_max_sensitivity     = 1600.0
 auto_exposure_speed               = 2.8
-auto_exposure_target_ev100        = 10.0
 dof_blur_far_enabled              = false
 dof_blur_near_enabled             = false
 

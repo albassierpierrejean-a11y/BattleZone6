@@ -47,7 +47,9 @@ func spawn_player(peer_id: int) -> Node:
 
 func despawn_player(peer_id: int) -> void:
 	if peer_id in _spawned_players:
-		_spawned_players[peer_id].queue_free()
+		var node := _spawned_players[peer_id]
+		if is_instance_valid(node):
+			node.queue_free()
 		_spawned_players.erase(peer_id)
 
 func get_player_node(peer_id: int) -> Node:

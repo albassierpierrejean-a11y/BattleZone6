@@ -96,13 +96,8 @@ func _setup_hdri_sky() -> void:
 	env.ssr_fade_out        = 2.0
 	env.ssr_depth_tolerance = 0.25
 
-	# SDFGI
-	env.sdfgi_enabled       = true
-	env.sdfgi_use_occlusion = true
-	env.sdfgi_min_cell_size = 0.25
-	env.sdfgi_energy        = 1.0
-	env.sdfgi_normal_bias   = 1.1
-	env.sdfgi_probe_bias    = 1.1
+	# SDFGI — disabled: causes black screen on Metal (Apple Silicon)
+	env.sdfgi_enabled = false
 
 	# Brume désertique chaude
 	env.fog_enabled            = true
@@ -151,7 +146,7 @@ func _setup_hdri_sky() -> void:
 		fill.light_color         = Color(0.62, 0.74, 0.92)
 		fill.shadow_enabled      = false
 		fill.light_specular      = 0.0
-		add_child(fill)
+		add_child.call_deferred(fill)
 
 # ─── Ground: sand base + grass patches + paving paths ────────────────────────
 func _setup_ground_layers() -> void:

@@ -90,8 +90,12 @@ func _build_mesh() -> void:
 
 func _process(delta: float) -> void:
 	_fire_cooldown = maxf(_fire_cooldown - delta, 0.0)
-	_handle_input()
 	_update_anim(delta)
+	if not visible:
+		return
+	var player := _find_player()
+	if player and player.is_multiplayer_authority():
+		_handle_input()
 
 func _update_anim(delta: float) -> void:
 	_fire_kick  = lerpf(_fire_kick, 0.0, delta * 16.0)
@@ -332,8 +336,9 @@ func _spawn_blood_effect(pos: Vector3, normal: Vector3) -> void:
 		func(): if is_instance_valid(blood): blood.queue_free())
 
 func _notify_suppression_along(origin: Vector3, dir: Vector3) -> void:
+	var self_player := _find_player()
 	for player in get_tree().get_nodes_in_group("players"):
-		if player == _find_player():
+		if player == self_player:
 			continue
 		var p3 := player as Node3D
 		if not p3:
@@ -469,6 +474,9 @@ func _spawn_bullet_trace(from: Vector3, to: Vector3) -> void:
 
 func _eject_shell() -> void:
 	if not muzzle:
+		return
+	var owner_player := _find_player()
+	if owner_player and not owner_player.is_multiplayer_authority():
 		return
 	var root := get_tree().current_scene
 	if not root:

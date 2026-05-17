@@ -63,6 +63,9 @@ var _is_sprinting:    bool  = false
 var stamina:          float = STAMINA_MAX
 var _stamina_delay:   float = 0.0
 
+var _last_sync_pos:   Vector3 = Vector3.ZERO
+var _last_sync_rot:   Vector3 = Vector3.ZERO
+
 var _item_lethal_cd:    float = 0.0
 var _item_tactical_cd:  float = 0.0
 var _throwing_item:     bool  = false
@@ -109,7 +112,12 @@ func _physics_process(delta: float) -> void:
 	_detect_landing()
 	move_and_slide()
 	_was_on_floor = is_on_floor()
-	_sync_transform.rpc(global_position, rotation, head.rotation)
+	var pos_delta := global_position.distance_squared_to(_last_sync_pos)
+	var rot_delta := absf(rotation.y - _last_sync_rot.y) + absf(head.rotation.x - _last_sync_rot.x)
+	if pos_delta > 0.0001 or rot_delta > 0.0005:
+		_last_sync_pos = global_position
+		_last_sync_rot = Vector3(head.rotation.x, rotation.y, 0.0)
+		_sync_transform.rpc(global_position, rotation, head.rotation)
 
 # ─── Visée souris ─────────────────────────────────────────────────────────────
 func _handle_mouse_look(rel: Vector2) -> void:

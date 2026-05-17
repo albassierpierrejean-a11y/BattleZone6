@@ -77,13 +77,8 @@ func _configure_environment() -> void:
 	env.ssr_fade_out        = 2.0
 	env.ssr_depth_tolerance = 0.22
 
-	# SDFGI
-	env.sdfgi_enabled       = true
-	env.sdfgi_use_occlusion = true
-	env.sdfgi_min_cell_size = 0.2
-	env.sdfgi_energy        = 1.0
-	env.sdfgi_normal_bias   = 1.1
-	env.sdfgi_probe_bias    = 1.1
+	# SDFGI — disabled: causes black screen on Metal (Apple Silicon)
+	env.sdfgi_enabled = false
 
 	# Glow — lumière volumétrique légère, éclats sur métal
 	env.glow_enabled    = true
@@ -139,4 +134,4 @@ func _configure_sun() -> void:
 		fill.light_color      = Color(0.58, 0.70, 0.90)
 		fill.shadow_enabled   = false
 		fill.light_specular   = 0.0
-		parent.add_child(fill)
+		parent.add_child.call_deferred(fill)

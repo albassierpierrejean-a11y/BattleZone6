@@ -15,11 +15,11 @@ func _process(delta: float) -> void:
 	_snapshot_timer += delta
 	if _snapshot_timer >= SNAPSHOT_RATE:
 		_snapshot_timer = 0.0
-		_record_snapshot()
-	_prune_history()
+		var now := Time.get_ticks_msec() / 1000.0
+		_record_snapshot(now)
+		_prune_history(now)
 
-func _record_snapshot() -> void:
-	var now := Time.get_ticks_msec() / 1000.0
+func _record_snapshot(now: float) -> void:
 	for player in get_tree().get_nodes_in_group("players"):
 		var pid := player.get_multiplayer_authority()
 		if pid not in _history:
@@ -30,10 +30,15 @@ func _record_snapshot() -> void:
 			"rot": player.global_rotation,
 		})
 
-func _prune_history() -> void:
-	var cutoff := Time.get_ticks_msec() / 1000.0 - HISTORY_DURATION
+func _prune_history(now: float) -> void:
+	var cutoff := now - HISTORY_DURATION
 	for pid in _history:
-		_history[pid] = _history[pid].filter(func(s): return s["time"] >= cutoff)
+		var arr: Array = _history[pid]
+		var i := arr.size() - 1
+		while i >= 0:
+			if arr[i]["time"] < cutoff:
+				arr.remove_at(i)
+			i -= 1
 
 func get_player_position_at(peer_id: int, timestamp: float) -> Vector3:
 	var history: Array = _history.get(peer_id, [])

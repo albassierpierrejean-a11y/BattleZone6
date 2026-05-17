@@ -28,6 +28,8 @@ var _indicator_mat: StandardMaterial3D
 var _beacon_light: OmniLight3D
 var _outer_ring: MeshInstance3D
 var _outer_ring_mat: StandardMaterial3D
+var _beam_mi: MeshInstance3D
+var _beam_mat_cached: StandardMaterial3D
 var _pulse_t: float = 0.0
 
 func _ready() -> void:
@@ -138,6 +140,8 @@ void fragment() {
 	beam.set_meta("beam_mat", beam_mat)
 	beam.name = "BeamMesh"
 	add_child(beam)
+	_beam_mi = beam
+	_beam_mat_cached = beam_mat
 
 	# ── Label du nom (billboard) ──
 	_name_label = Label3D.new()
@@ -168,11 +172,8 @@ func _update_visual() -> void:
 		_beacon_light.light_color = color
 	if _outer_ring_mat:
 		_outer_ring_mat.emission = color * 0.9
-	var beam_mi := get_node_or_null("BeamMesh") as MeshInstance3D
-	if beam_mi:
-		var bmat := beam_mi.get_meta("beam_mat") as StandardMaterial3D
-		if bmat:
-			bmat.emission = color * 0.9
+	if _beam_mat_cached:
+		_beam_mat_cached.emission = color * 0.9
 
 func _process(delta: float) -> void:
 	_pulse_t += delta * 1.4
@@ -185,9 +186,6 @@ func _process(delta: float) -> void:
 	if _beacon_light:
 		var energy := 1.8 + sin(_pulse_t * 1.8) * 0.45
 		_beacon_light.light_energy = energy
-	var beam_mi := get_node_or_null("BeamMesh") as MeshInstance3D
-	if beam_mi:
-		var bmat := beam_mi.get_meta("beam_mat") as StandardMaterial3D
-		if bmat:
-			var ba := (sin(_pulse_t * 0.7) * 0.5 + 0.5) * 0.12 + 0.04
-			bmat.albedo_color.a = ba
+	if _beam_mat_cached:
+		var ba := (sin(_pulse_t * 0.7) * 0.5 + 0.5) * 0.12 + 0.04
+		_beam_mat_cached.albedo_color.a = ba

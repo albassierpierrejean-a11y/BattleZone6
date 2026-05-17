@@ -36,11 +36,20 @@ var _recoil_applied:Vector2 = Vector2.ZERO  # ce qu'on a déjà appliqué cette 
 var _shake:         float   = 0.0
 var _is_aiming:     bool    = false
 
+var _player_cache:  PlayerController = null
+var _wm_cache:      WeaponManager    = null
+var _env_cache:     WorldEnvironment = null
+
 func _ready() -> void:
 	fov = FOV_DEFAULT
+	await get_tree().process_frame
+	_player_cache = _get_player()
+	if _player_cache:
+		_wm_cache = _player_cache.get_node_or_null("Head/Camera3D/WeaponManager") as WeaponManager
+	_env_cache = get_tree().get_first_node_in_group("world_environment") as WorldEnvironment
 
 func _process(delta: float) -> void:
-	var player := _get_player()
+	var player := _player_cache
 	if not player or not player.is_multiplayer_authority():
 		return
 	var head := get_parent() as Node3D
@@ -148,24 +157,22 @@ func is_aiming() -> bool:
 	return _is_aiming
 
 # ─── Utilitaire ──────────────────────────────────────────────────────────────
-func _update_dof(delta: float, player: PlayerController) -> void:
-	# DoF léger en visée sniper — flou de fond lointain
-	var wm := player.get_node_or_null("Head/Camera3D/WeaponManager") as WeaponManager
+func _update_dof(_delta: float, _player: PlayerController) -> void:
+	var wm := _wm_cache
 	var is_sniper := wm != null and wm.get_current_weapon() != null and wm.get_current_weapon().weapon_name == "SR-98"
 	var want_dof  := _is_aiming and is_sniper
-	var env       := get_viewport().find_child("WorldEnvironment", true, false)
-	if not env or not (env as WorldEnvironment).environment:
+	if not _env_cache or not _env_cache.environment:
 		return
-	var e := (env as WorldEnvironment).environment
+	var e := _env_cache.environment
 	if want_dof and not e.dof_blur_far_enabled:
-		e.dof_blur_far_enabled    = true
-		e.dof_blur_far_distance   = 35.0
-		e.dof_blur_far_transition = 18.0
-		e.dof_blur_far_amount     = 0.04
-		e.dof_blur_near_enabled   = true
-		e.dof_blur_near_distance  = 1.2
+		e.dof_blur_far_enabled     = true
+		e.dof_blur_far_distance    = 35.0
+		e.dof_blur_far_transition  = 18.0
+		e.dof_blur_far_amount      = 0.04
+		e.dof_blur_near_enabled    = true
+		e.dof_blur_near_distance   = 1.2
 		e.dof_blur_near_transition = 0.5
-		e.dof_blur_near_amount    = 0.02
+		e.dof_blur_near_amount     = 0.02
 	elif not want_dof and e.dof_blur_far_enabled:
 		e.dof_blur_far_enabled  = false
 		e.dof_blur_near_enabled = false

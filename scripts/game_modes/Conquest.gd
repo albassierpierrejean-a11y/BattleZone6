@@ -56,9 +56,10 @@ func _process(delta: float) -> void:
 	_drain_tickets(delta)
 
 func _update_flags(delta: float) -> void:
+	var all_players := get_tree().get_nodes_in_group("players")
 	for cp in flags:
-		var alpha_count := _count_players_at(cp.node.global_position, GameManager.Team.ALPHA)
-		var bravo_count := _count_players_at(cp.node.global_position, GameManager.Team.BRAVO)
+		var alpha_count := _count_players_at(cp.node.global_position, GameManager.Team.ALPHA, all_players)
+		var bravo_count := _count_players_at(cp.node.global_position, GameManager.Team.BRAVO, all_players)
 		var net := float(alpha_count - bravo_count)
 
 		if net == 0.0:
@@ -78,13 +79,13 @@ func _update_flags(delta: float) -> void:
 
 		_update_flag_visual(cp)
 
-func _count_players_at(pos: Vector3, team: int) -> int:
+func _count_players_at(pos: Vector3, team: int, players: Array) -> int:
 	var count := 0
-	for p in get_tree().get_nodes_in_group("players"):
-		if p is CharacterBody3D:
-			var pd := GameManager.get_player_data(p.peer_id if "peer_id" in p else 1)
+	for p in players:
+		if p is PlayerController:
+			var pd := GameManager.get_player_data(p.peer_id)
 			if pd and pd.team == team:
-				if p.global_position.distance_to(pos) <= CAPTURE_RADIUS:
+				if p.global_position.distance_squared_to(pos) <= CAPTURE_RADIUS * CAPTURE_RADIUS:
 					count += 1
 	return count
 

@@ -11,6 +11,7 @@ class_name VehicleBase
 @export var max_health: float       = 500.0
 @export var num_seats: int          = 2
 @export var exit_offsets: Array[Vector3] = [Vector3(2, 0.5, 0), Vector3(-2, 0.5, 0)]
+@export var tire_track_width: float      = 0.30
 
 # ─── Signals ─────────────────────────────────────────────────────────────────
 signal health_changed(current: float, max_hp: float)
@@ -34,6 +35,11 @@ var _is_destroyed: bool = false
 
 var _exhaust: CPUParticles3D = null
 var _track_timer: float = 0.0
+var _cached_wheels: Array          = []
+var _wheel_dust: Array             = []
+var _track_mat: StandardMaterial3D = null
+var _track_mesh_res: PlaneMesh     = null
+var _dust_emitting: bool           = false
 
 func _ready() -> void:
 	hp = max_health
@@ -43,6 +49,9 @@ func _ready() -> void:
 	_setup_camera()
 	_build_exhaust()
 	_build_interact_prompt()
+	_cache_wheels()
+	_build_dust_emitters()
+	_build_track_resources()
 
 func _setup_camera() -> void:
 	if camera:
@@ -76,8 +85,54 @@ func _build_exhaust() -> void:
 	_exhaust.emitting         = false
 	add_child(_exhaust)
 
+func _cache_wheels() -> void:
+	for child in get_children():
+		if child is VehicleWheel3D:
+			_cached_wheels.append(child)
+
+func _build_dust_emitters() -> void:
+	for wheel in _cached_wheels:
+		var dust := CPUParticles3D.new()
+		dust.one_shot             = false
+		dust.amount               = 10
+		dust.lifetime             = 0.55
+		dust.initial_velocity_min = 0.4
+		dust.initial_velocity_max = 1.8
+		dust.direction            = Vector3(0, 0.65, 0.75).normalized()
+		dust.spread               = 55.0
+		dust.gravity              = Vector3(0, 1.5, 0)
+		dust.scale_amount_min     = 0.06
+		dust.scale_amount_max     = 0.20
+		dust.color                = Color(0.52, 0.44, 0.32, 0.50)
+		dust.position             = Vector3(wheel.position.x, wheel.position.y - wheel.wheel_radius * 0.5, wheel.position.z)
+		dust.emitting             = false
+		add_child(dust)
+		_wheel_dust.append(dust)
+
+func _build_track_resources() -> void:
+	_track_mesh_res        = PlaneMesh.new()
+	_track_mesh_res.size   = Vector2(tire_track_width, 0.55)
+	_track_mat             = StandardMaterial3D.new()
+	_track_mat.albedo_color    = Color(0.09, 0.07, 0.05, 0.72)
+	_track_mat.transparency    = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_track_mat.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_NEVER
+	_track_mat.shading_mode    = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_track_mat.cull_mode       = BaseMaterial3D.CULL_DISABLED
+	_track_mat.render_priority = 1
+
+func _update_dust() -> void:
+	var spd := linear_velocity.length()
+	var should_emit := not _is_destroyed and spd > 1.5
+	if should_emit == _dust_emitting:
+		return
+	_dust_emitting = should_emit
+	for dust in _wheel_dust:
+		if is_instance_valid(dust):
+			dust.emitting = should_emit
+
 func _physics_process(delta: float) -> void:
 	_update_interact_prompt()
+	_update_dust()
 	if _is_destroyed or not _driver:
 		_apply_idle(delta)
 		return
@@ -212,31 +267,36 @@ func _destroy() -> void:
 
 func _spawn_tire_tracks(delta: float) -> void:
 	var spd := linear_velocity.length()
-	if spd < 0.5:
+	if spd < 0.5 or not _track_mesh_res:
 		return
 	_track_timer -= delta
 	if _track_timer > 0.0:
 		return
-	_track_timer = 0.25
+	_track_timer = 0.28
 	var root := get_tree().current_scene
 	if not root:
 		return
 	var space := get_world_3d().direct_space_state
-	# Cast ray down from vehicle center
-	var from := global_position + Vector3.UP * 0.5
-	var ray  := PhysicsRayQueryParameters3D.create(from, from + Vector3.DOWN * 2.0)
-	ray.exclude = [get_rid()]
-	var hit := space.intersect_ray(ray)
-	if hit.is_empty():
-		return
-	var pos: Vector3 = hit["position"]
-	var decal := Decal.new()
-	root.add_child(decal)
-	decal.global_position = pos + Vector3.UP * 0.01
-	decal.size     = Vector3(1.6, 0.1, 0.8)
-	decal.modulate = Color(0.12, 0.10, 0.08, 0.65)
-	decal.rotation.y = global_rotation.y
-	get_tree().create_timer(18.0).timeout.connect(func(): if is_instance_valid(decal): decal.queue_free())
+	for wheel in _cached_wheels:
+		if not is_instance_valid(wheel):
+			continue
+		var from := wheel.global_position + Vector3.UP * 0.5
+		var ray  := PhysicsRayQueryParameters3D.create(from, from + Vector3.DOWN * 1.8)
+		ray.exclude = [get_rid()]
+		var hit := space.intersect_ray(ray)
+		if hit.is_empty():
+			continue
+		var mark := MeshInstance3D.new()
+		root.add_child(mark)
+		mark.global_position   = hit["position"] + Vector3.UP * 0.006
+		mark.rotation.y        = global_rotation.y
+		mark.mesh              = _track_mesh_res
+		mark.material_override = _track_mat
+		mark.cast_shadow       = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mark.gi_mode           = GeometryInstance3D.GI_MODE_DISABLED
+		get_tree().create_timer(15.0).timeout.connect(
+			func(): if is_instance_valid(mark): mark.queue_free()
+		)
 
 func _spawn_destruction_vfx() -> void:
 	var root := get_tree().current_scene

@@ -37,12 +37,15 @@ var _gun_cooldown: float = 0.0
 var _cam_yaw: float = 0.0
 var _cam_pitch: float = 0.0
 var _engines_on: bool = false
+var _ground_wash: CPUParticles3D = null
+var _wash_timer: float = 0.0
 
 func _ready() -> void:
 	seats.resize(num_seats)
 	seats.fill(null)
 	add_to_group("vehicles")
 	_build_mesh()
+	_build_ground_wash()
 
 func _build_mesh() -> void:
 	var heli_mat := StandardMaterial3D.new()
@@ -175,6 +178,45 @@ func _build_mesh() -> void:
 			strut.material_override = skid_mat
 			add_child(strut)
 
+func _build_ground_wash() -> void:
+	_ground_wash = CPUParticles3D.new()
+	_ground_wash.one_shot             = false
+	_ground_wash.amount               = 20
+	_ground_wash.lifetime             = 1.1
+	_ground_wash.initial_velocity_min = 2.0
+	_ground_wash.initial_velocity_max = 5.5
+	_ground_wash.direction            = Vector3(0, -0.25, 1).normalized()
+	_ground_wash.spread               = 85.0
+	_ground_wash.gravity              = Vector3(0, -0.5, 0)
+	_ground_wash.scale_amount_min     = 0.12
+	_ground_wash.scale_amount_max     = 0.40
+	_ground_wash.color                = Color(0.52, 0.44, 0.32, 0.50)
+	_ground_wash.position             = Vector3(0, -0.5, 0)
+	_ground_wash.emitting             = false
+	add_child(_ground_wash)
+
+func _update_ground_wash() -> void:
+	if not _ground_wash:
+		return
+	if not _pilot:
+		if _ground_wash.emitting:
+			_ground_wash.emitting = false
+		return
+	var space := get_world_3d().direct_space_state
+	var ray := PhysicsRayQueryParameters3D.create(
+		global_position, global_position + Vector3.DOWN * 5.5
+	)
+	ray.exclude = [get_rid()]
+	var hit := space.intersect_ray(ray)
+	if hit.is_empty():
+		_ground_wash.emitting = false
+	else:
+		_ground_wash.emitting = true
+		var h_dist: float = global_position.y - (hit["position"] as Vector3).y
+		var t := clampf(1.0 - h_dist / 5.5, 0.0, 1.0)
+		_ground_wash.initial_velocity_max = 3.0 + t * 5.0
+		_ground_wash.scale_amount_max     = 0.22 + t * 0.45
+
 func _input(event: InputEvent) -> void:
 	if not _pilot or not _pilot.is_multiplayer_authority():
 		return
@@ -186,6 +228,10 @@ func _input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	_gun_cooldown = maxf(_gun_cooldown - delta, 0.0)
 	_spin_rotor(delta)
+	_wash_timer -= delta
+	if _wash_timer <= 0.0:
+		_wash_timer = 0.12
+		_update_ground_wash()
 	if not _pilot or not _pilot.is_multiplayer_authority():
 		return
 	_handle_flight(delta)

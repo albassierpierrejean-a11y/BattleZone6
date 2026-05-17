@@ -23,14 +23,15 @@ var _turret_yaw: float = 0.0
 var _cannon_pitch: float = 0.0
 
 func _ready() -> void:
-	vehicle_name     = "M1A2 Abrams"
-	max_speed        = 14.0
-	engine_force_val = 1200.0
-	brake_force      = 30.0
-	steer_max        = 0.25
-	max_health       = 1200.0
-	num_seats        = 2
-	exit_offsets     = [Vector3(0, 1.5, -2), Vector3(0, 1.5, 1.5)]
+	vehicle_name      = "M1A2 Abrams"
+	max_speed         = 14.0
+	engine_force_val  = 1200.0
+	brake_force       = 30.0
+	steer_max         = 0.25
+	max_health        = 1200.0
+	num_seats         = 2
+	exit_offsets      = [Vector3(0, 1.5, -2), Vector3(0, 1.5, 1.5)]
+	tire_track_width  = 0.58
 	super._ready()
 	_build_mesh()
 

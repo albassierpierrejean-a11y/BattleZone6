@@ -703,9 +703,11 @@ func _on_stamina_changed(current: float, max_val: float) -> void:
 	_stamina_bar.color = Color(0.18, 0.72, 0.38, 0.85) if pct > 0.3 else Color(0.9, 0.4, 0.1, 0.9)
 
 func _on_suppression_changed(level: float) -> void:
-	if not _suppress_overlay:
-		return
-	_suppress_overlay.color = Color(0.0, 0.0, 0.0, level * 0.18)
+	if _suppress_overlay:
+		_suppress_overlay.color = Color(0.0, 0.0, 0.0, level * 0.18)
+	var pp := get_node_or_null("PostProcess") as ColorRect
+	if pp and pp.material is ShaderMaterial:
+		(pp.material as ShaderMaterial).set_shader_parameter("suppress_str", level)
 
 func _update_scope(_delta: float) -> void:
 	if not _scope_overlay or not _player:

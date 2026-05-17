@@ -22,7 +22,9 @@ const PAVE_N   := "res://assets/textures/PavingStones149_4K-PNG/PavingStones149_
 const PAVE_R   := "res://assets/textures/PavingStones149_4K-PNG/PavingStones149_4K-PNG_Roughness.png"
 const PAVE_AO  := "res://assets/textures/PavingStones149_4K-PNG/PavingStones149_4K-PNG_AmbientOcclusion.png"
 
-const HDRI_SKY := "res://assets/skies/DaySkyHDRI059A_4K_HDR.exr"
+const HDRI_SKY  := "res://assets/skies/DaySkyHDRI063B_4K_HDR.exr"
+const HDRI_SKY2 := "res://assets/skies/DaySkyHDRI059A_4K_HDR.exr"
+const HEAT_HAZE_SHADER := "res://assets/shaders/heat_haze.gdshader"
 const AK74_GLB := "res://assets/models/weapons/ak74m.glb"
 
 # ─── Override parent visuals entirely ────────────────────────────────────────
@@ -34,8 +36,9 @@ func _setup_visuals() -> void:
 	_build_oasis_pool()
 	_build_palm_trees()
 	_build_paths()
+	_build_heat_haze()
 
-# ─── HDRI panorama sky ────────────────────────────────────────────────────────
+# ─── HDRI panorama sky + environnement complet ───────────────────────────────
 func _setup_hdri_sky() -> void:
 	var world_env := get_node_or_null("WorldEnvironment") as WorldEnvironment
 	if not world_env:
@@ -45,55 +48,109 @@ func _setup_hdri_sky() -> void:
 
 	var sky     := Sky.new()
 	var sky_mat := PanoramaSkyMaterial.new()
-	if ResourceLoader.exists(HDRI_SKY):
-		sky_mat.panorama = load(HDRI_SKY) as Texture2D
+	var hdri_path := HDRI_SKY if ResourceLoader.exists(HDRI_SKY) else HDRI_SKY2
+	if ResourceLoader.exists(hdri_path):
+		sky_mat.panorama = load(hdri_path) as Texture2D
+	sky_mat.energy_multiplier = 1.0
 	sky.sky_material = sky_mat
 	env.sky = sky
 
-	env.ambient_light_source   = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy   = 0.85
-	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
-	env.tonemap_mode           = Environment.TONE_MAPPER_FILMIC
-	env.tonemap_exposure       = 1.05
-	env.tonemap_white          = 6.0
-	env.glow_enabled           = true
-	env.glow_normalized        = true
-	env.glow_intensity         = 0.6
-	env.glow_bloom             = 0.12
-	env.ssao_enabled           = true
-	env.ssao_radius            = 1.2
-	env.ssao_intensity         = 2.0
-	env.ssil_enabled           = true
-	env.ssil_radius            = 5.0
-	env.ssil_intensity         = 0.8
-	env.ssil_sharpness         = 0.9
-	env.sdfgi_enabled          = true
-	env.sdfgi_use_occlusion    = true
-	env.sdfgi_min_cell_size    = 0.2
-	env.sdfgi_energy           = 1.0
-	env.ssr_enabled            = false
-	# Desert atmosphere — subtle sandy haze
+	env.ambient_light_source        = Environment.AMBIENT_SOURCE_SKY
+	env.ambient_light_energy        = 0.72
+	env.ambient_light_sky_contribution = 0.75
+	env.reflected_light_source      = Environment.REFLECTION_SOURCE_SKY
+
+	# Tonemapping ACES — plus dramatique, pousse les oranges
+	env.tonemap_mode     = Environment.TONE_MAPPER_ACES
+	env.tonemap_exposure = 1.08
+	env.tonemap_white    = 7.0
+
+	# Glow — éclats légers sur métal/eau
+	env.glow_enabled    = true
+	env.glow_normalized = false
+	env.glow_intensity  = 0.55
+	env.glow_strength   = 1.0
+	env.glow_bloom      = 0.10
+	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
+
+	# SSAO — occlusion ambiante forte dans les recoins de sable
+	env.ssao_enabled   = true
+	env.ssao_radius    = 1.4
+	env.ssao_intensity = 2.4
+	env.ssao_power     = 1.6
+	env.ssao_detail    = 0.5
+	env.ssao_horizon   = 0.06
+	env.ssao_sharpness = 0.98
+
+	# SSIL — rebond de lumière chaude sur le sable
+	env.ssil_enabled   = true
+	env.ssil_radius    = 6.0
+	env.ssil_intensity = 1.1
+	env.ssil_sharpness = 0.88
+
+	# SSR — reflets sur l'eau de l'oasis
+	env.ssr_enabled         = true
+	env.ssr_max_steps       = 48
+	env.ssr_fade_in         = 0.12
+	env.ssr_fade_out        = 2.0
+	env.ssr_depth_tolerance = 0.25
+
+	# SDFGI
+	env.sdfgi_enabled       = true
+	env.sdfgi_use_occlusion = true
+	env.sdfgi_min_cell_size = 0.25
+	env.sdfgi_energy        = 1.0
+	env.sdfgi_normal_bias   = 1.1
+	env.sdfgi_probe_bias    = 1.1
+
+	# Brume désertique chaude
 	env.fog_enabled            = true
-	env.fog_light_color        = Color(0.94, 0.82, 0.62)
-	env.fog_density            = 0.0018
-	env.fog_aerial_perspective = 0.18
+	env.fog_light_color        = Color(0.96, 0.84, 0.60)
+	env.fog_light_energy       = 1.0
+	env.fog_density            = 0.0016
+	env.fog_aerial_perspective = 0.22
+	env.fog_sky_affect         = 0.35
 	env.volumetric_fog_enabled = true
-	env.volumetric_fog_density = 0.004
-	env.volumetric_fog_albedo  = Color(0.92, 0.80, 0.60)
-	env.volumetric_fog_emission = Color(0.18, 0.12, 0.05)
-	env.volumetric_fog_emission_energy = 0.12
-	env.adjustment_enabled     = true
-	env.adjustment_saturation  = 1.08
-	env.adjustment_contrast    = 1.04
+	env.volumetric_fog_density = 0.0035
+	env.volumetric_fog_albedo  = Color(0.94, 0.82, 0.58)
+	env.volumetric_fog_emission        = Color(0.20, 0.13, 0.04)
+	env.volumetric_fog_emission_energy = 0.15
+	env.volumetric_fog_length          = 80.0
+	env.volumetric_fog_detail_spread   = 2.0
+
+	# Color grading — palette olive/orange (lift chaud, gain orange, gamma légèrement dégradé)
+	env.adjustment_enabled    = true
+	env.adjustment_brightness = 0.97
+	env.adjustment_contrast   = 1.10
+	env.adjustment_saturation = 1.14
+
 	world_env.environment = env
 
-	# Direction du soleil pour un éclairage doré désertique
+	# Soleil principal — angle bas, lumière dorée intense
 	var sun := get_node_or_null("DirectionalLight3D") as DirectionalLight3D
 	if sun:
-		sun.rotation_degrees = Vector3(-38, 30, 0)
-		sun.light_energy     = 1.4
-		sun.light_color      = Color(1.0, 0.92, 0.78)
-		sun.shadow_enabled   = true
+		sun.rotation_degrees    = Vector3(-32, 42, 0)
+		sun.light_energy        = 1.6
+		sun.light_color         = Color(1.0, 0.91, 0.72)
+		sun.shadow_enabled      = true
+		sun.shadow_bias         = 0.03
+		sun.directional_shadow_mode            = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+		sun.directional_shadow_split_1         = 0.1
+		sun.directional_shadow_split_2         = 0.28
+		sun.directional_shadow_split_3         = 0.55
+		sun.directional_shadow_fade_start      = 0.82
+		sun.directional_shadow_max_distance    = 180.0
+
+	# Fill light — lumière de rebond de ciel bleu-froid depuis l'opposé
+	if not get_node_or_null("FillLight"):
+		var fill := DirectionalLight3D.new()
+		fill.name                = "FillLight"
+		fill.rotation_degrees    = Vector3(-18, -148, 0)
+		fill.light_energy        = 0.28
+		fill.light_color         = Color(0.62, 0.74, 0.92)
+		fill.shadow_enabled      = false
+		fill.light_specular      = 0.0
+		add_child(fill)
 
 # ─── Ground: sand base + grass patches + paving paths ────────────────────────
 func _setup_ground_layers() -> void:
@@ -585,3 +642,48 @@ func _spawn_ammo_pickups_oasis() -> void:
 		ap.name     = "AmmoPickup_%d" % i
 		ap.position = positions[i]
 		add_child(ap)
+
+# ─── Nappes de chaleur sur le sable ──────────────────────────────────────────
+func _build_heat_haze() -> void:
+	if not ResourceLoader.exists(HEAT_HAZE_SHADER):
+		return
+	var haze_shader := load(HEAT_HAZE_SHADER) as Shader
+	if not haze_shader:
+		return
+
+	# Zones de chaleur intense : centre désertique + flancs exposés
+	var zones: Array = [
+		# [position_xz_centre, taille_xz, intensité, vitesse]
+		[Vector3(   0, 0.08,    0), Vector2(60.0, 60.0), 0.014, 1.4],   # centre oasis
+		[Vector3( -50, 0.08,  -25), Vector2(45.0, 35.0), 0.018, 1.6],   # flanc NW
+		[Vector3(  50, 0.08,   25), Vector2(45.0, 35.0), 0.018, 1.6],   # flanc SE
+		[Vector3( -80, 0.08,    0), Vector2(30.0, 30.0), 0.020, 1.8],   # spawn Alpha
+		[Vector3(  80, 0.08,    0), Vector2(30.0, 30.0), 0.020, 1.8],   # spawn Bravo
+		[Vector3(   0, 0.08,  -65), Vector2(25.0, 20.0), 0.016, 1.2],   # rochers nord
+		[Vector3(   0, 0.08,   65), Vector2(25.0, 20.0), 0.016, 1.2],   # rochers sud
+	]
+
+	for i in zones.size():
+		var pos: Vector3  = zones[i][0]
+		var sz: Vector2   = zones[i][1]
+		var inten: float  = zones[i][2]
+		var spd: float    = zones[i][3]
+
+		var mat := ShaderMaterial.new()
+		mat.shader = haze_shader
+		mat.set_shader_parameter("intensity",      inten)
+		mat.set_shader_parameter("speed",          spd)
+		mat.set_shader_parameter("noise_scale",    6.5 + float(i) * 0.4)
+		mat.set_shader_parameter("vertical_fade",  0.55)
+		mat.render_priority = -1
+
+		var mi  := MeshInstance3D.new()
+		mi.name = "HeatHaze_%d" % i
+		mi.position = pos
+		var pm := PlaneMesh.new()
+		pm.size = sz
+		mi.mesh = pm
+		mi.material_override = mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.gi_mode     = GeometryInstance3D.GI_MODE_DISABLED
+		add_child(mi)

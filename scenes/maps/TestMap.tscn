@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://scripts/maps/MapManager.gd" id="1_mm"]
 [ext_resource type="PackedScene" path="res://scenes/ui/HUD.tscn" id="8_hud"]
@@ -243,3 +243,13 @@ script = ExtResource("11_ammo")
 [node name="Ammo3" type="Area3D" parent="Pickups"]
 position = Vector3(0, 1, -15)
 script = ExtResource("11_ammo")
+
+[node name="Vehicles" type="Node3D" parent="."]
+
+[node name="JeepAlpha" instance=ExtResource("12_jeep") parent="Vehicles"]
+position = Vector3(-35, 1, 5)
+rotation = Vector3(0, 1.5708, 0)
+
+[node name="JeepBravo" instance=ExtResource("12_jeep") parent="Vehicles"]
+position = Vector3(35, 1, -5)
+rotation = Vector3(0, -1.5708, 0)

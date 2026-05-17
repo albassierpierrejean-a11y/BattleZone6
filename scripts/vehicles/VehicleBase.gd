@@ -19,11 +19,11 @@ signal player_entered(player: Node, seat: int)
 signal player_exited(player: Node, seat: int)
 
 # ─── Node refs ───────────────────────────────────────────────────────────────
-@onready var camera_mount: Node3D      = $CameraMount
-@onready var camera: Camera3D         = $CameraMount/Camera3D
-@onready var damage_particles: GPUParticles3D = $DamageParticles
-@onready var smoke_particles: GPUParticles3D  = $SmokeParticles
-@onready var engine_sound: AudioStreamPlayer3D = $EngineSound
+@onready var camera_mount: Node3D           = get_node_or_null("CameraMount")                  as Node3D
+@onready var camera: Camera3D              = get_node_or_null("CameraMount/Camera3D")          as Camera3D
+@onready var damage_particles: GPUParticles3D = get_node_or_null("DamageParticles")            as GPUParticles3D
+@onready var smoke_particles: GPUParticles3D  = get_node_or_null("SmokeParticles")             as GPUParticles3D
+@onready var engine_sound: AudioStreamPlayer3D = get_node_or_null("EngineSound")               as AudioStreamPlayer3D
 
 # ─── State ───────────────────────────────────────────────────────────────────
 var hp: float

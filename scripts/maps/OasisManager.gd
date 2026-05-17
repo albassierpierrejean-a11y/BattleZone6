@@ -36,6 +36,7 @@ func _setup_visuals() -> void:
 	_build_oasis_pool()
 	_build_palm_trees()
 	_build_paths()
+	_build_boundary_walls()
 	_build_heat_haze()
 
 # ─── HDRI panorama sky + environnement complet ───────────────────────────────
@@ -642,6 +643,28 @@ func _spawn_ammo_pickups_oasis() -> void:
 		ap.name     = "AmmoPickup_%d" % i
 		ap.position = positions[i]
 		add_child(ap)
+
+# ─── Murs de bordure invisibles ──────────────────────────────────────────────
+func _build_boundary_walls() -> void:
+	const MAP_HALF := 148.0
+	const WALL_H   := 30.0
+	# [position, size]
+	var walls: Array = [
+		[Vector3(       0, WALL_H * 0.5,  MAP_HALF), Vector3(MAP_HALF * 2, WALL_H, 1.0)],
+		[Vector3(       0, WALL_H * 0.5, -MAP_HALF), Vector3(MAP_HALF * 2, WALL_H, 1.0)],
+		[Vector3( MAP_HALF, WALL_H * 0.5,        0), Vector3(1.0, WALL_H, MAP_HALF * 2)],
+		[Vector3(-MAP_HALF, WALL_H * 0.5,        0), Vector3(1.0, WALL_H, MAP_HALF * 2)],
+	]
+	for i in walls.size():
+		var body := StaticBody3D.new()
+		body.name = "Boundary_%d" % i
+		body.position = walls[i][0]
+		var col := CollisionShape3D.new()
+		var csh := BoxShape3D.new()
+		csh.size = walls[i][1]
+		col.shape = csh
+		body.add_child(col)
+		add_child(body)
 
 # ─── Nappes de chaleur sur le sable ──────────────────────────────────────────
 func _build_heat_haze() -> void:

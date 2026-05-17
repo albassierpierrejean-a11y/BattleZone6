@@ -25,6 +25,7 @@ GameManager="*res://scripts/autoloads/GameManager.gd"
 NetworkManager="*res://scripts/autoloads/NetworkManager.gd"
 AudioManager="*res://scripts/autoloads/AudioManager.gd"
 GraphicsManager="*res://scripts/autoloads/GraphicsManager.gd"
+ProgressionManager="*res://scripts/autoloads/ProgressionManager.gd"
 
 [display]
 

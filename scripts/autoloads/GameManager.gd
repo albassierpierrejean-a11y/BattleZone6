@@ -110,6 +110,8 @@ func report_kill(killer_id: int, victim_id: int) -> void:
 	if killer:
 		killer.kills += 1
 		killer.score += 100
+		if killer_id == multiplayer.get_unique_id():
+			ProgressionManager.record_kill()
 	player_died_event.emit(victim_id, killer_id)
 	request_respawn(victim_id)
 	_broadcast_scores()
@@ -126,9 +128,17 @@ func add_score(team: int, amount: int) -> void:
 	if current_game_mode and current_game_mode.has_method("check_win_condition"):
 		current_game_mode.check_win_condition()
 
+signal match_ended(won: bool, map_name: String, mode_name: String, xp_breakdown: Dictionary)
+
 func end_round(winner: Team) -> void:
 	set_game_state(GameState.ROUND_END)
 	round_ended.emit(winner)
+	var local_team := -1
+	var ld := get_player_data(multiplayer.get_unique_id())
+	if ld: local_team = ld.team
+	var won := (local_team == int(winner))
+	var breakdown := ProgressionManager.record_match_end(won)
+	match_ended.emit(won, "CARTE", "MATCH", breakdown)
 
 # ─── Événements réseau ────────────────────────────────────────────────────────
 func _on_peer_connected(peer_id: int) -> void:

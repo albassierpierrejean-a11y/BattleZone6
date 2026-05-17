@@ -344,24 +344,41 @@ func _setup_flag_hud_icons() -> void:
 		flag_icons.add_child(icon)
 		_flag_hud_icons.append(icon)
 
+var _enemy_dots: Array[ColorRect] = []
+
 func _update_minimap() -> void:
 	if not _minimap_root or not _player:
 		return
 	var mm_size  := _minimap_root.size
 	var center   := mm_size * 0.5
-	const SCALE  := 0.70   # pixels par unité monde
+	const SCALE  := 0.70
 	var pp       := _player.global_position
 	var flags    := get_tree().get_nodes_in_group("capture_points")
 	for i in mini(flags.size(), _flag_icon_nodes.size()):
-		var fp   := (flags[i] as Node3D).global_position
-		var dot  := _flag_icon_nodes[i]
+		var fp  := (flags[i] as Node3D).global_position
+		var dot := _flag_icon_nodes[i]
 		dot.position = center + Vector2((fp.x - pp.x) * SCALE, (fp.z - pp.z) * SCALE) - Vector2(4, 4)
 		if "owner_team" in flags[i]:
 			dot.color = _team_color(flags[i].owner_team)
-	# Aiguille de direction du joueur
 	var needle := _minimap_root.get_node_or_null("PlayerNeedle") as ColorRect
 	if needle:
 		needle.rotation = _player.rotation.y
+	# UAV — points ennemis
+	var enemy_positions := _get_enemy_positions() if _uav_active else []
+	while _enemy_dots.size() < enemy_positions.size():
+		var d := ColorRect.new()
+		d.size = Vector2(6, 6)
+		d.color = Color(1.0, 0.15, 0.15, 0.92)
+		d.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_minimap_root.add_child(d)
+		_enemy_dots.append(d)
+	for i in _enemy_dots.size():
+		if i < enemy_positions.size():
+			var ep := enemy_positions[i]
+			_enemy_dots[i].visible  = true
+			_enemy_dots[i].position = center + Vector2((ep.x - pp.x) * SCALE, (ep.z - pp.z) * SCALE) - Vector2(3, 3)
+		else:
+			_enemy_dots[i].visible = false
 
 func _update_flag_hud() -> void:
 	var flags := get_tree().get_nodes_in_group("capture_points")
@@ -429,6 +446,8 @@ func _process(delta: float) -> void:
 		scoreboard.visible = true
 	if Input.is_action_just_released("scoreboard"):
 		scoreboard.visible = false
+	_tick_uav(delta)
+	_handle_airstrike_input()
 	_update_minimap()
 	_update_flag_hud()
 	_update_scope(delta)
@@ -548,14 +567,81 @@ func _on_hit_confirmed(is_headshot: bool) -> void:
 
 func _on_player_died(_source: int) -> void:
 	_kill_streak = 0
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	respawn_overlay.visible = true
+	_show_spawn_selection()
 	var t := 0.0
 	while t < GameManager.RESPAWN_TIME:
 		t += get_process_delta_time()
-		respawn_timer.text = "RESPAWNING IN  %d" % int(GameManager.RESPAWN_TIME - t)
+		respawn_timer.text = "RESPAWN  %d" % (int(GameManager.RESPAWN_TIME - t) + 1)
 		await get_tree().process_frame
+	_hide_spawn_selection()
 	respawn_overlay.visible = false
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	_fade_in_from_black()
+
+# ─── Sélection de spawn ───────────────────────────────────────────────────────
+var _spawn_panel: Control = null
+
+func _show_spawn_selection() -> void:
+	if _spawn_panel:
+		_spawn_panel.queue_free()
+	var panel := VBoxContainer.new()
+	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_KEEP_SIZE)
+	panel.offset_top    = -260.0
+	panel.offset_bottom = -80.0
+	panel.offset_left   = -160.0
+	panel.offset_right  = 160.0
+	panel.theme_override_constants/separation = 8
+
+	var lbl := Label.new()
+	lbl.text = "CHOISIR ZONE DE SPAWN"
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 11)
+	lbl.add_theme_color_override("font_color", Color(0.65, 0.75, 0.60, 0.8))
+	panel.add_child(lbl)
+
+	var zones := [
+		["ZONE ALPHA",   GameManager.Team.ALPHA, Color(0.25, 0.50, 1.0)],
+		["ZONE BRAVO",   GameManager.Team.BRAVO, Color(1.0,  0.28, 0.22)],
+	]
+	for z in zones:
+		var btn := Button.new()
+		btn.text = z[0] as String
+		btn.custom_minimum_size = Vector2(320, 44)
+		var sbox := StyleBoxFlat.new()
+		sbox.bg_color = Color(z[1] as Color, 0.12)
+		sbox.border_width_left = 2; sbox.border_width_right = 2
+		sbox.border_width_top  = 2; sbox.border_width_bottom = 2
+		sbox.border_color = Color(z[1] as Color, 0.55)
+		sbox.content_margin_left  = 12; sbox.content_margin_right  = 12
+		sbox.content_margin_top   = 8;  sbox.content_margin_bottom = 8
+		var sbox_h := sbox.duplicate() as StyleBoxFlat
+		sbox_h.bg_color = Color(z[1] as Color, 0.30)
+		btn.add_theme_stylebox_override("normal",  sbox)
+		btn.add_theme_stylebox_override("hover",   sbox_h)
+		btn.add_theme_stylebox_override("pressed", sbox_h)
+		btn.add_theme_color_override("font_color",       Color(0.88, 0.94, 0.88))
+		btn.add_theme_color_override("font_hover_color", Color.WHITE)
+		btn.add_theme_font_size_override("font_size", 14)
+		var zone_team: int = z[2] as int  # capture for lambda
+		btn.pressed.connect(func(): _select_spawn_zone(z[1] as int, btn, panel))
+		panel.add_child(btn)
+
+	add_child(panel)
+	_spawn_panel = panel
+
+func _select_spawn_zone(team: int, selected_btn: Button, panel: VBoxContainer) -> void:
+	for child in panel.get_children():
+		if child is Button:
+			child.disabled = (child == selected_btn)
+	if multiplayer.has_multiplayer_peer():
+		GameManager.select_spawn_zone.rpc_id(1, team)
+
+func _hide_spawn_selection() -> void:
+	if _spawn_panel and is_instance_valid(_spawn_panel):
+		_spawn_panel.queue_free()
+	_spawn_panel = null
 
 func _fade_in_from_black() -> void:
 	var fade := ColorRect.new()
@@ -613,10 +699,18 @@ func _add_killfeed_entry(killer: String, victim: String) -> void:
 	tween.tween_property(label, "modulate:a", 0.0, 0.5)
 	tween.tween_callback(label.queue_free)
 
+var _uav_active: bool = false
+var _uav_timer:  float = 0.0
+var _airstrike_ready: bool = false
+var _airstrike_targeting: bool = false
+
 func _show_kill_streak() -> void:
 	if _kill_streak < 2:
 		return
-	var messages := {2: "DOUBLE KILL", 3: "TRIPLE KILL", 4: "QUAD KILL", 5: "KILLSTREAK!"}
+	var messages := {
+		2: "DOUBLE KILL", 3: "TRIPLE KILL", 4: "QUAD KILL", 5: "KILLSTREAK!",
+		6: "UNSTOPPABLE!", 7: "GODLIKE!"
+	}
 	kill_streak_label.text = messages.get(_kill_streak, "KILLING SPREE!")
 	kill_streak_label.visible = true
 	kill_streak_label.modulate.a = 1.0
@@ -627,6 +721,126 @@ func _show_kill_streak() -> void:
 	tween.tween_interval(2.2)
 	tween.tween_property(kill_streak_label, "modulate:a", 0.0, 0.35)
 	tween.tween_callback(func(): kill_streak_label.visible = false)
+
+	match _kill_streak:
+		3: _activate_uav()
+		5: _unlock_airstrike()
+		7: _activate_uav(); _unlock_airstrike()
+
+# ─── UAV ─────────────────────────────────────────────────────────────────────
+const UAV_DURATION := 20.0
+
+func _activate_uav() -> void:
+	_uav_active = true
+	_uav_timer  = UAV_DURATION
+	show_objective_message("UAV EN LIGNE — Ennemis visibles %ds" % int(UAV_DURATION), 4.0)
+
+func _tick_uav(delta: float) -> void:
+	if not _uav_active:
+		return
+	_uav_timer -= delta
+	if _uav_timer <= 0.0:
+		_uav_active = false
+		show_objective_message("UAV HORS LIGNE", 2.5)
+
+func _get_enemy_positions() -> Array[Vector3]:
+	var result: Array[Vector3] = []
+	if not _player:
+		return result
+	var my_team := GameManager.get_player_data(_player.peer_id)
+	if not my_team:
+		return result
+	for p in get_tree().get_nodes_in_group("players"):
+		if p is PlayerController and p != _player:
+			var pd := GameManager.get_player_data(p.peer_id)
+			if pd and pd.team != my_team.team:
+				result.append(p.global_position)
+	return result
+
+# ─── Airstrike ───────────────────────────────────────────────────────────────
+func _unlock_airstrike() -> void:
+	_airstrike_ready = true
+	show_objective_message("FRAPPE AÉRIENNE PRÊTE — [F] pour cibler", 4.0)
+
+func _handle_airstrike_input() -> void:
+	if not _airstrike_ready:
+		return
+	if Input.is_action_just_pressed("use_tactical"):
+		if _airstrike_targeting:
+			_execute_airstrike()
+		else:
+			_airstrike_targeting = true
+			show_objective_message("CLIC GAUCHE pour confirmer la frappe", 3.0)
+
+func _execute_airstrike() -> void:
+	_airstrike_targeting = false
+	_airstrike_ready = false
+	if not _player:
+		return
+	var cam := _player.get_node_or_null("Head/Camera3D") as Camera3D
+	if not cam:
+		return
+	var space := _player.get_world_3d().direct_space_state
+	var origin := cam.global_position
+	var fwd    := -cam.global_transform.basis.z
+	var query  := PhysicsRayQueryParameters3D.create(origin, origin + fwd * 500.0)
+	var hit    := space.intersect_ray(query)
+	var target := hit.get("position", origin + fwd * 200.0) if not hit.is_empty() else origin + fwd * 200.0
+	_call_airstrike_on_server.rpc_id(1, target)
+	show_objective_message("FRAPPE EN APPROCHE…", 3.0)
+
+@rpc("any_peer", "reliable")
+func _call_airstrike_on_server(target: Vector3) -> void:
+	if not multiplayer.is_server():
+		return
+	_spawn_airstrike.rpc(target)
+
+@rpc("authority", "call_local", "reliable")
+func _spawn_airstrike(target: Vector3) -> void:
+	var root := get_tree().current_scene
+	if not root:
+		return
+	# Effet visuel : 3 explosions décalées
+	for i in 3:
+		var offset := Vector3(randf_range(-4, 4), 0, randf_range(-4, 4))
+		var pos    := target + offset
+		get_tree().create_timer(i * 0.18).timeout.connect(func(): _spawn_explosion(pos, root))
+	# Dégâts AoE serveur uniquement
+	if multiplayer.is_server():
+		await get_tree().create_timer(0.1).timeout
+		for p in get_tree().get_nodes_in_group("players"):
+			if p is PlayerController:
+				var dist := p.global_position.distance_to(target)
+				if dist < 8.0:
+					var dmg := lerpf(120.0, 20.0, dist / 8.0)
+					p.take_damage(dmg, multiplayer.get_unique_id())
+
+func _spawn_explosion(pos: Vector3, root: Node) -> void:
+	var particles := CPUParticles3D.new()
+	root.add_child(particles)
+	particles.global_position   = pos
+	particles.one_shot          = true
+	particles.explosiveness     = 1.0
+	particles.amount            = 40
+	particles.lifetime          = 1.2
+	particles.initial_velocity_min = 6.0
+	particles.initial_velocity_max = 22.0
+	particles.spread            = 80.0
+	particles.gravity           = Vector3(0, -9.8, 0)
+	particles.scale_amount_min  = 0.08
+	particles.scale_amount_max  = 0.35
+	particles.color             = Color(1.0, 0.42, 0.08)
+	particles.emitting          = true
+	var light := OmniLight3D.new()
+	light.omni_range    = 14.0
+	light.light_energy  = 18.0
+	light.light_color   = Color(1.0, 0.55, 0.15)
+	light.shadow_enabled = false
+	root.add_child(light)
+	light.global_position = pos + Vector3.UP * 0.5
+	get_tree().create_timer(2.0).timeout.connect(func():
+		if is_instance_valid(particles): particles.queue_free()
+		if is_instance_valid(light): light.queue_free())
 
 func update_round_timer(seconds: float) -> void:
 	if round_timer:

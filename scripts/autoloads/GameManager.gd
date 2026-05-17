@@ -24,6 +24,7 @@ var spawn_points: Dictionary = { Team.ALPHA: [], Team.BRAVO: [] }
 var current_game_mode: Node = null
 var round_time_remaining: float = 0.0
 var local_player_id: int = 1
+var _spawn_prefs: Dictionary = {}   # peer_id → preferred team zone (-1 = own team)
 
 class PlayerData:
 	var id: int
@@ -75,12 +76,21 @@ func register_spawn_point(team: int, point: Node3D) -> void:
 	if team in spawn_points:
 		spawn_points[team].append(point)
 
-func get_spawn_position(team: int) -> Vector3:
-	var points: Array = spawn_points.get(team, [])
+func get_spawn_position(team: int, peer_id: int = -1) -> Vector3:
+	var zone: int = _spawn_prefs.get(peer_id, -1) if peer_id >= 0 else -1
+	var t: int    = zone if zone >= 0 else team
+	var points: Array = spawn_points.get(t, [])
+	if points.is_empty():
+		points = spawn_points.get(team, [])
 	if points.is_empty():
 		return Vector3(0, 2, 0)
 	points.shuffle()
 	return points[0].global_position
+
+@rpc("any_peer", "reliable")
+func select_spawn_zone(zone_team: int) -> void:
+	var pid := multiplayer.get_remote_sender_id()
+	_spawn_prefs[pid] = zone_team
 
 func request_respawn(peer_id: int) -> void:
 	if not multiplayer.is_server():
@@ -90,7 +100,8 @@ func request_respawn(peer_id: int) -> void:
 		return
 	data.deaths += 1
 	await get_tree().create_timer(RESPAWN_TIME).timeout
-	var pos := get_spawn_position(data.team)
+	var pos := get_spawn_position(data.team, peer_id)
+	_spawn_prefs.erase(peer_id)
 	_do_respawn.rpc_id(peer_id, pos)
 
 @rpc("authority", "reliable")

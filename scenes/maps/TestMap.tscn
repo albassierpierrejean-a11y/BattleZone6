@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://scripts/maps/MapManager.gd" id="1_mm"]
 [ext_resource type="PackedScene" path="res://scenes/ui/HUD.tscn" id="8_hud"]
@@ -11,6 +11,9 @@
 [ext_resource type="Script" path="res://scripts/maps/BattlefieldEnvironment.gd" id="9_bfenv"]
 [ext_resource type="Script" path="res://scripts/items/HealthPickup.gd" id="10_hp"]
 [ext_resource type="Script" path="res://scripts/items/AmmoPickup.gd" id="11_ammo"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/Jeep.tscn" id="12_jeep"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/Tank.tscn" id="13_tank"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/Helicopter.tscn" id="14_heli"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
 size = Vector3(200, 0.5, 200)
@@ -253,3 +256,14 @@ rotation = Vector3(0, 1.5708, 0)
 [node name="JeepBravo" instance=ExtResource("12_jeep") parent="Vehicles"]
 position = Vector3(35, 1, -5)
 rotation = Vector3(0, -1.5708, 0)
+
+[node name="TankAlpha" instance=ExtResource("13_tank") parent="Vehicles"]
+position = Vector3(-40, 1, -8)
+rotation = Vector3(0, 1.5708, 0)
+
+[node name="TankBravo" instance=ExtResource("13_tank") parent="Vehicles"]
+position = Vector3(40, 1, 8)
+rotation = Vector3(0, -1.5708, 0)
+
+[node name="HelicopterMid" instance=ExtResource("14_heli") parent="Vehicles"]
+position = Vector3(0, 1, -20)

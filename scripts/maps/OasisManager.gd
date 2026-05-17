@@ -490,6 +490,7 @@ func _spawn_map_props() -> void:
 	_spawn_weapon_props()
 	_spawn_health_pickups_oasis()
 	_spawn_ammo_pickups_oasis()
+	_spawn_vehicles_oasis()
 	_spawn_ambient_lights_oasis()
 
 func _spawn_barrels_oasis() -> void:
@@ -559,6 +560,43 @@ func _spawn_sandbags_oasis() -> void:
 		var sb := _make_sandbag_wall(walls[i][0], walls[i][1])
 		sb.name = "Sandbag_%d" % i
 		add_child(sb)
+
+func _spawn_vehicles_oasis() -> void:
+	var jeep_scene := load("res://scenes/vehicles/Jeep.tscn") as PackedScene
+	var tank_scene := load("res://scenes/vehicles/Tank.tscn") as PackedScene
+	var heli_scene := load("res://scenes/vehicles/Helicopter.tscn") as PackedScene
+
+	var jeep_spawns: Array = [
+		[Vector3(-88, 1,  8), Vector3(0,  1.5708, 0)],
+		[Vector3( 88, 1, -8), Vector3(0, -1.5708, 0)],
+		[Vector3(-88, 1, -8), Vector3(0,  1.5708, 0)],
+		[Vector3( 88, 1,  8), Vector3(0, -1.5708, 0)],
+	]
+	if jeep_scene:
+		for i in jeep_spawns.size():
+			var j := jeep_scene.instantiate()
+			j.name     = "Jeep_%d" % i
+			j.position = jeep_spawns[i][0]
+			j.rotation = jeep_spawns[i][1]
+			add_child(j)
+
+	var tank_spawns: Array = [
+		[Vector3(-82, 1,  16), Vector3(0,  1.5708, 0)],
+		[Vector3( 82, 1, -16), Vector3(0, -1.5708, 0)],
+	]
+	if tank_scene:
+		for i in tank_spawns.size():
+			var t := tank_scene.instantiate()
+			t.name     = "Tank_%d" % i
+			t.position = tank_spawns[i][0]
+			t.rotation = tank_spawns[i][1]
+			add_child(t)
+
+	if heli_scene:
+		var h := heli_scene.instantiate()
+		h.name     = "Helicopter_0"
+		h.position = Vector3(0, 1, -22)
+		add_child(h)
 
 func _spawn_ambient_lights_oasis() -> void:
 	var lights: Array = [

@@ -1,0 +1,31 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicles/Helicopter.gd" id="1_heli"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.88
+height = 4.2
+
+[node name="Helicopter" type="RigidBody3D"]
+script = ExtResource("1_heli")
+mass = 800.0
+
+[node name="BodyCol" type="CollisionShape3D" parent="."]
+rotation = Vector3(1.5708, 0, 0)
+shape = SubResource("CapsuleShape3D_body")
+
+[node name="Rotor" type="Node3D" parent="."]
+position = Vector3(0, 1.15, 0)
+
+[node name="CameraMount" type="Node3D" parent="."]
+position = Vector3(0, 0.5, 1.8)
+
+[node name="Camera3D" type="Camera3D" parent="CameraMount"]
+fov = 85.0
+
+[node name="GunTip" type="Marker3D" parent="."]
+position = Vector3(0, -0.2, 2.5)
+
+[node name="EngineSound" type="AudioStreamPlayer3D" parent="."]
+
+[node name="GunSound" type="AudioStreamPlayer3D" parent="."]
